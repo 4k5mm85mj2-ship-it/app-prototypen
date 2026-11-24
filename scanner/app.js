@@ -82,7 +82,7 @@
       <h1 tabindex="-1">Einfach digital.<br>Für alle.</h1>
       <p class="intro">Scannen. Lesen. Teilen.</p>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
-      <button type="button" class="scan-start-button" data-action="start"><img src="scanner-comic.webp" width="640" height="480" alt="" aria-hidden="true"><span>Neuer Scan</span></button>
+      <button type="button" class="scan-start-button" data-action="start"><span class="scanner-art" aria-hidden="true"><img class="scanner-base" src="scanner-comic.webp" width="640" height="480" alt=""><img class="scanner-lid" src="scanner-comic.webp" width="640" height="480" alt=""></span><span>Neuer Scan</span></button>
     </section>`;
   }
   function cameraView() {
@@ -210,7 +210,19 @@
     }
   }
   dialog.addEventListener('cancel', event => { event.preventDefault(); closeDialog(); });
-  function start() {
+  async function start() {
+    const trigger = main.querySelector('.scan-start-button');
+    if (!trigger || trigger.disabled) return;
+    trigger.disabled = true;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const lid = trigger.querySelector('.scanner-lid');
+      const motion = lid.animate([
+        { transform: 'translate(0, 0) matrix(1, 0, 0, 1, 0, 0)' },
+        { transform: 'translate(6.375%, 90.664%) matrix(.983817, -.172620, -.157457, -.679545, 0, 0)' }
+      ], { duration: 520, easing: 'ease-in-out', fill: 'forwards' });
+      await motion.finished.catch(() => {});
+      if (state.view !== 'home' || !trigger.isConnected) return;
+    }
     state.pages = [];
     state.awaitingChange = false;
     state.search = '';
@@ -274,7 +286,7 @@
       openDialog('Datei bereits vorhanden', `<p>„${esc(name)}“ ist bereits vergeben. Bitte wähle einen anderen Namen.</p>`, button('rename', 'Dateiname ändern') + button('unique-name', 'Mit ergänzter Nummer speichern', 'secondary'));
       return;
     }
-    openDialog('Speichern', `<div class="file-chip">${icon('document', 30)}<div><strong>${esc(name)}</strong><small>${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'} · ${esc(settings.folder)}</small></div></div>`, button('save-complete', 'Fertig') + button('close-dialog', 'Zurück zum Dokument', 'secondary'));
+    openDialog('Speichern erfolgreich', '', button('save-complete', 'Fertig'));
   }
   function share() {
     const name = filenameForExport();
