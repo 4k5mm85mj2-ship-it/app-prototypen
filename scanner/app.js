@@ -82,7 +82,7 @@
       <h1 tabindex="-1">Einfach digital.<br>Für alle.</h1>
       <p class="intro">Scannen. Lesen. Teilen.</p>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
-      <button type="button" class="scan-start-button" data-action="start"><img src="scanner.svg?v=3" width="240" height="180" alt="" aria-hidden="true"><span>Neuer Scan</span></button>
+      <button type="button" class="scan-start-button" data-action="start"><img src="scanner-comic.webp" width="640" height="480" alt="" aria-hidden="true"><span>Neuer Scan</span></button>
     </section>`;
   }
   function cameraView() {
