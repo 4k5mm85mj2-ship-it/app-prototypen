@@ -2,6 +2,8 @@
 
 Interaktiver, eigenständiger Web-Prototyp nach den Projektquellen 00–12, Version 1.0 vom 24.11.2026. Arbeitstitel **Scanner-App**; Produktname und Kontaktangaben bleiben offen.
 
+Überarbeitung vom 24.11.2026 nach Nutzerentscheidung: iOS-nahe Navigation und Einstellungen; illustrierte Scanner-Schaltfläche; Dokument im Mittelpunkt mit fester unterer Leiste **Speichern · Teilen · Verwerfen**. Die Ordnerauswahl erfolgt ausschließlich in den Einstellungen. Diese Entscheidung ersetzt für den Klickdummy die bisherige Ordnerauswahl beim Speichern aus F06.
+
 ## Öffnen
 
 GitHub Pages: https://4k5mm85mj2-ship-it.github.io/app-prototypen/scanner/
@@ -10,12 +12,12 @@ GitHub Pages: https://4k5mm85mj2-ship-it.github.io/app-prototypen/scanner/
 
 ## Durchspielen
 
-1. **Neuer Scan** wählen. Im Bereich **Klickdummy bedienen** die gute Ausrichtung simulieren. Die übrige Kameraansicht bildet die geplante App ab.
+1. Einmalig in **Einstellungen → Speicherordner** einen Beispielordner konfigurieren. Danach die illustrierte Schaltfläche **Neuer Scan** wählen. Im Bereich **Klickdummy bedienen** die gute Ausrichtung simulieren. Die übrige Kameraansicht bildet die geplante App ab.
 2. Standardmodus: Nach jeder Aufnahme **Weiter scannen** oder **Fertig** wählen. Alternativ in den Einstellungen **Automatisch weiterscannen** einschalten: Nach der Aufnahme **Nächste Seite auflegen** und die gute Ausrichtung simulieren. **Fertig** ist nach mindestens einer Seite verfügbar.
 3. Ein bis mehrere Beispieldokumente lesen, durchsuchen und benennen. **Nächster Treffer** und **Vorheriger Treffer** setzen den Tastatur-/Screenreader-Fokus auf den Treffer. Die zweite Seite demonstriert unsichere OCR.
-4. **Speichern** öffnet bei Bedarf eine beispielhafte Ordnerauswahl; anschließend den erfolgreichen Schreibvorgang ausdrücklich simulieren. Erst danach erscheint wieder der Start. Gleiche Namen werden nicht überschrieben.
+4. Am unteren Rand **Speichern**, **Teilen** oder **Verwerfen** wählen. **Speichern** verwendet immer den konfigurierten Ordner; den erfolgreichen Schreibvorgang ausdrücklich simulieren. Erst danach erscheint wieder der Start. Gleiche Namen werden nicht überschrieben. Ohne Ordner erscheint ein Hinweis, keine Ordnerauswahl. Über das Einstellungssymbol kann die Konfiguration geändert werden; **Zurück** erhält das aktuelle Dokument einschließlich Namen und Suchbegriff.
 5. **Teilen** zeigt eine Simulation des Teilmenüs und kehrt zum erhaltenen Dokument zurück.
-6. Unter **Weitere Zustände testen** Speicherfehler, Dateinamenskollision und fehlenden OCR-Text prüfen. Verweigerte Kameraberechtigung lässt sich in der Kameraansicht demonstrieren.
+6. Bei geöffnetem Dokument in **Einstellungen → Weitere Zustände testen** Speicherfehler, Dateinamenskollision und fehlenden OCR-Text aktivieren. Verweigerte Kameraberechtigung lässt sich in der Kameraansicht demonstrieren.
 
 ## Grenzen und Daten
 

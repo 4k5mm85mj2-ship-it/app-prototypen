@@ -15,6 +15,8 @@
     document: '<path d="M14 3H5v18h14V8zM14 3v5h5M8 12h8m-8 4h6"/>',
     share: '<path d="M7 10H4v11h16V10h-3M12 15V3m-5 5 5-5 5 5"/>',
     folder: '<path d="M3 6h7l2 3h9v11H3z"/>',
+    save: '<path d="M12 3v11m-4-4 4 4 4-4M4 14v7h16v-7"/>',
+    trash: '<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',
     plus: '<path d="M12 5v14M5 12h14"/>'
   };
   const icon = (name, size = 24) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${icons[name] || icons.document}</svg>`;
@@ -44,7 +46,7 @@
     settings.sound = saved.sound !== false;
     if (['Auf meinem iPhone / Scans', 'iCloud Drive / Scans'].includes(saved.folder)) settings.folder = saved.folder;
   } catch { /* Settings are optional; the prototype also works without localStorage. */ }
-  const state = { view: 'home', pages: [], awaitingChange: false, filename: '', search: '', match: -1, saveError: false, ocrMissing: false, notice: '' };
+  const state = { view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '' };
   const exportedNames = new Set();
   let returnFocus = null;
   function persistSettings() {
@@ -58,20 +60,26 @@
   function render(focus = true) {
     announce('');
     const atHome = state.view === 'home';
+    const isDocument = state.view === 'document';
+    document.body.classList.toggle('document-active', isDocument);
     $('navigation').innerHTML = atHome
       ? `<div class="wordmark"><span class="app-icon">${icon('scan', 22)}</span>Scanner-App</div><button class="nav-button" data-action="settings">${icon('settings', 21)}Einstellungen</button>`
-      : `<button class="nav-button" data-action="${state.view === 'settings' ? 'home' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? 'Einstellungen' : 'Neuer Scan'}</span>`;
+      : isDocument
+        ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
+        : `<button class="nav-button" data-action="${state.view === 'settings' ? 'back-settings' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? '' : 'Neuer Scan'}</span>`;
     main.innerHTML = state.view === 'home' ? homeView() : state.view === 'settings' ? settingsView() : state.view === 'camera' ? cameraView() : documentView();
+    $('document-actions').innerHTML = isDocument
+      ? `<div class="document-toolbar" role="group" aria-label="Dokumentaktionen">${button('save', 'Speichern', 'toolbar-action', 'save')}${button('share', 'Teilen', 'toolbar-action', 'share')}${button('abort', 'Verwerfen', 'toolbar-action destructive', 'trash')}</div>`
+      : '';
     if (focus) focusTitle();
   }
   function homeView() {
     return `<section class="home">
-      <div class="hero-mark">${icon('scan', 47)}</div>
       <p class="eyebrow">Einfach digitalisieren</p>
       <h1 tabindex="-1">Dein Papier.<br>Einfach lesbar.</h1>
       <p class="intro">Dokument erfassen, Text lesen und als PDF speichern oder teilen.</p>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
-      ${button('start', 'Neuer Scan', 'primary start-action', 'plus')}
+      <button type="button" class="scan-start-button" data-action="start"><img src="scanner.svg" width="240" height="180" alt="" aria-hidden="true"><span>Neuer Scan</span>${icon('arrow', 24)}</button>
       <p class="privacy-line">${icon('shield', 19)}<span>Für die App geplant: Verarbeitung auf deinem Gerät, ohne Konto.</span></p>
       <div class="home-help"><h2>Ein Schritt nach dem anderen.</h2><p>Die Kamera unterstützt beim Ausrichten. Danach kannst du den erkannten Text in Ruhe lesen und durchsuchen.</p></div>
     </section>`;
@@ -104,6 +112,11 @@
         <button class="setting-row row-button" data-action="help"><span>Hilfe &amp; Kontakt</span><span class="chevron" aria-hidden="true">›</span></button>
         <button class="setting-row row-button" data-action="legal"><span>Impressum &amp; Datenschutz</span><span class="chevron" aria-hidden="true">›</span></button>
       </div><p class="compact-note">Der Klickdummy merkt sich nur diese Einstellungen in diesem Browser. Beispieldokumente bleiben bis zum Abschluss des Scans im Arbeitsspeicher.</p>
+      ${state.pages.length ? `<details class="demo-controls"><summary>Weitere Zustände testen</summary><p>Diese Optionen gehören nur zum Klickdummy.</p>
+        <label class="setting-row"><span>Speicherfehler simulieren</span><input id="save-error-setting" type="checkbox" ${state.saveError ? 'checked' : ''}></label>
+        <label class="setting-row"><span>Fehlende Texterkennung auf Seite 1</span><input id="ocr-missing-setting" type="checkbox" ${state.ocrMissing ? 'checked' : ''}></label>
+        <label class="setting-row"><span>Vorhandenen Dateinamen simulieren</span><input id="collision-setting" type="checkbox" ${state.forceCollision ? 'checked' : ''}></label>
+      </details>` : ''}
     </section>`;
   }
   function normalizedName(value) {
@@ -115,21 +128,13 @@
   }
   function documentView() {
     const normalized = normalizedName(state.filename);
-    return `<section class="document-screen"><p class="eyebrow">Lesen &amp; exportieren</p>
-      <div class="heading-row"><h1 tabindex="-1">Dein Dokument</h1><span class="muted">${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</span></div>
-      <label class="field" for="filename">Dateiname</label><input class="text-input" id="filename" type="text" autocomplete="off" spellcheck="false" value="${esc(state.filename)}" aria-describedby="filename-hint filename-error">
-      <p class="filename-preview" id="filename-hint">${normalized.name ? 'PDF: ' + esc(normalized.name) : 'Die Endung .pdf wird automatisch ergänzt.'}</p><p id="filename-error" class="error-message" role="alert"></p>
-      <div class="two-columns actions">${button('save', 'Speichern', 'primary', 'folder')}${button('share', 'Teilen', 'secondary', 'share')}</div>
-      <p class="field-hint">${settings.folder ? 'Speicherordner: ' + esc(settings.folder) : 'Beim Speichern wählst du einen Ordner aus.'}</p><p id="export-error" class="error-message" role="alert"></p>
-      <div class="card"><label class="field" for="search">Dokument durchsuchen</label><div class="search-box">${icon('search', 20)}<input class="text-input" type="search" id="search" placeholder="Suchbegriff" value="${esc(state.search)}" autocomplete="off" aria-describedby="search-status"></div>
+    return `<section class="document-screen"><h1 class="sr-only" tabindex="-1">Dein Dokument, ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</h1>
+      <div class="document-name"><label class="field" for="filename">Dateiname</label><input class="text-input" id="filename" type="text" autocomplete="off" spellcheck="false" value="${esc(state.filename)}" aria-describedby="filename-hint filename-error"></div>
+      <p class="sr-only" id="filename-hint">${normalized.name ? 'PDF: ' + esc(normalized.name) : 'Die Endung .pdf wird automatisch ergänzt.'}</p><p id="filename-error" class="error-message" role="alert"></p>
+      ${!settings.folder ? '<p class="folder-hint">Zum Speichern bitte einmalig in den Einstellungen einen Speicherordner festlegen.</p>' : ''}<p id="export-error" class="error-message" role="alert"></p>
+      <div class="document-search"><label class="sr-only" for="search">Dokument durchsuchen</label><div class="search-box">${icon('search', 20)}<input class="text-input" type="search" id="search" placeholder="Dokument durchsuchen" value="${esc(state.search)}" autocomplete="off" aria-describedby="search-status"></div>
       <div class="search-nav"><span id="search-status" role="status" aria-atomic="true">Suchbegriff eingeben</span><button class="secondary" id="previous-match" data-action="previous-match" disabled>Vorheriger Treffer</button><button class="secondary" id="next-match" data-action="next-match" disabled>Nächster Treffer</button></div></div>
       <div class="document-pages" id="document-pages">${pageMarkup()}</div>
-      <div class="document-bottom">${button('abort', 'Scan verwerfen', 'danger-button')}</div>
-      <details class="demo-controls"><summary>Weitere Zustände testen</summary><p>Diese Optionen gehören nur zum Klickdummy.</p>
-        <label class="setting-row"><span>Speicherfehler simulieren</span><input id="save-error-setting" type="checkbox" ${state.saveError ? 'checked' : ''}></label>
-        <label class="setting-row"><span>Fehlende Texterkennung auf Seite 1</span><input id="ocr-missing-setting" type="checkbox" ${state.ocrMissing ? 'checked' : ''}></label>
-        ${button('collision', 'Vorhandenen Dateinamen testen', 'secondary')}
-      </details>
     </section>`;
   }
   function pageMarkup() {
@@ -162,6 +167,7 @@
     const count = main.querySelectorAll('mark').length;
     state.match = -1;
     $('search-status').textContent = term ? `${count} Treffer` : 'Suchbegriff eingeben';
+    main.querySelector('.search-nav').hidden = !term;
     $('next-match').disabled = $('previous-match').disabled = !count;
   }
   function moveMatch(direction) {
@@ -198,6 +204,7 @@
     state.notice = '';
     state.saveError = false;
     state.ocrMissing = false;
+    state.forceCollision = false;
     state.view = 'camera';
     render();
   }
@@ -229,20 +236,25 @@
     if (result.error) { $('filename').focus(); return null; }
     return result.name;
   }
-  function chooseFolder(saveAfter = false) {
+  function chooseFolder() {
+    if (state.view !== 'settings') return;
     openDialog('Speicherordner auswählen', '<p>In der App öffnet sich hier die Ordnerauswahl von Apple Dateien. Wähle für den Klickdummy ein Beispiel.</p><p class="compact-note">Ein iCloud-Ordner kann durch den Dateianbieter synchronisiert werden.</p>',
-      button(saveAfter ? 'folder-local-save' : 'folder-local', 'Auf meinem iPhone / Scans', 'secondary', 'folder') + button(saveAfter ? 'folder-cloud-save' : 'folder-cloud', 'iCloud Drive / Scans', 'secondary', 'folder') + button('close-dialog', 'Abbrechen', 'text-link'));
+      button('folder-local', 'Auf meinem iPhone / Scans', 'secondary', 'folder') + button('folder-cloud', 'iCloud Drive / Scans', 'secondary', 'folder') + button('close-dialog', 'Abbrechen', 'text-link'));
   }
   function save() {
     const name = filenameForExport();
     if (!name) return;
-    if (!settings.folder) { chooseFolder(true); return; }
+    if (!settings.folder) {
+      $('export-error').textContent = 'Bitte lege in den Einstellungen einen Speicherordner fest. Dein Dokument bleibt erhalten.';
+      return;
+    }
     if (state.saveError) {
-      $('export-error').textContent = 'Der Ordner ist gerade nicht erreichbar. Dein Scan bleibt erhalten. Versuche es erneut oder wähle einen anderen Ordner.';
-      openDialog('Speichern fehlgeschlagen', '<p>Simulierter Fehler: Der Speicherordner ist nicht erreichbar. Alle Seiten und dein Dateiname bleiben erhalten.</p>', button('retry-save', 'Erneut versuchen') + button('folder-for-save', 'Anderen Ordner wählen', 'secondary') + button('close-dialog', 'Zurück zum Dokument', 'text-link'));
+      $('export-error').textContent = 'Der Ordner ist gerade nicht erreichbar. Dein Scan bleibt erhalten. Versuche es erneut. Den Speicherordner kannst du in den Einstellungen ändern.';
+      openDialog('Speichern fehlgeschlagen', '<p>Simulierter Fehler: Der Speicherordner ist nicht erreichbar. Alle Seiten und dein Dateiname bleiben erhalten. Den Ordner kannst du ausschließlich in den Einstellungen ändern.</p>', button('retry-save', 'Erneut versuchen') + button('close-dialog', 'Zurück zum Dokument', 'secondary'));
       return;
     }
     const key = settings.folder + '/' + name.toLocaleLowerCase('de-DE');
+    if (state.forceCollision) { exportedNames.add(key); state.forceCollision = false; }
     if (exportedNames.has(key)) {
       openDialog('Datei bereits vorhanden', `<p>„${esc(name)}“ liegt bereits im gewählten Beispielordner. Bitte wähle einen anderen Namen.</p>`, button('rename', 'Dateiname ändern') + button('unique-name', 'Mit ergänzter Nummer speichern', 'secondary'));
       return;
@@ -257,28 +269,25 @@
   function abort() {
     openDialog('Scan verwerfen?', `<p>${state.pages.length ? 'Die erfassten Seiten und der erkannte Text werden verworfen.' : 'Der Scan wird beendet.'} Es wird keine Datei erstellt.</p>`, button('confirm-abort', 'Scan verwerfen', 'danger-button') + button('close-dialog', 'Scan fortsetzen', 'secondary'));
   }
-  function selectFolder(cloud, saveAfter) {
+  function selectFolder(cloud) {
+    if (state.view !== 'settings') return;
     settings.folder = cloud ? 'iCloud Drive / Scans' : 'Auf meinem iPhone / Scans';
     persistSettings();
     closeDialog(false);
     render();
-    if (state.view === 'document') updateSearch();
-    if (saveAfter) save();
   }
   const actions = {
     start, capture, finish, save, share, abort,
-    settings() { state.view = 'settings'; render(); },
+    settings() { state.settingsReturn = state.view; state.view = 'settings'; render(); },
+    'back-settings'() { state.view = state.settingsReturn; render(); if (state.view === 'document') updateSearch(); },
     home() { state.view = 'home'; render(); },
     'page-change'() { if (!state.awaitingChange) return; state.awaitingChange = false; render(); announce('Neue Seite bereit. Das Dokument etwas nach rechts bewegen.'); },
     continue() { closeDialog(false); state.awaitingChange = false; render(); },
     'close-dialog'() { closeDialog(); },
     'confirm-abort'() { closeDialog(false); state.pages = []; state.filename = ''; state.search = ''; state.notice = 'Scan verworfen. Es wurde keine Datei erstellt.'; state.view = 'home'; render(); },
-    folder() { chooseFolder(false); },
-    'folder-for-save'() { chooseFolder(true); },
-    'folder-local'() { selectFolder(false, false); },
-    'folder-cloud'() { selectFolder(true, false); },
-    'folder-local-save'() { selectFolder(false, true); },
-    'folder-cloud-save'() { selectFolder(true, true); },
+    folder() { chooseFolder(); },
+    'folder-local'() { selectFolder(false); },
+    'folder-cloud'() { selectFolder(true); },
     'retry-save'() { state.saveError = false; closeDialog(false); render(); updateSearch(); save(); },
     'save-complete'() {
       const name = normalizedName(state.filename).name;
@@ -295,13 +304,6 @@
       while (exportedNames.has(settings.folder + '/' + `${original} (${number}).pdf`.toLocaleLowerCase('de-DE'))) number++;
       state.filename = `${original} (${number})`;
       closeDialog(false); render(); updateSearch(); save();
-    },
-    collision() {
-      if (!settings.folder) { settings.folder = 'Auf meinem iPhone / Scans'; persistSettings(); }
-      const name = normalizedName(state.filename).name;
-      if (!name) { filenameForExport(); return; }
-      exportedNames.add(settings.folder + '/' + name.toLocaleLowerCase('de-DE'));
-      save();
     },
     'next-match'() { moveMatch(1); },
     'previous-match'() { moveMatch(-1); },
@@ -330,7 +332,18 @@
     if (id === 'auto-setting') { settings.auto = checked; persistSettings(); }
     if (id === 'sound-setting') { settings.sound = checked; persistSettings(); }
     if (id === 'save-error-setting') state.saveError = checked;
-    if (id === 'ocr-missing-setting') { state.ocrMissing = checked; updateSearch(); announce(checked ? 'Auf Seite 1 wurde kein Text erkannt. Ein Hinweis ist in der Dokumentansicht verfügbar.' : 'Beispieltext auf Seite 1 wiederhergestellt.'); }
+    if (id === 'collision-setting') state.forceCollision = checked;
+    if (id === 'ocr-missing-setting') { state.ocrMissing = checked; announce(checked ? 'Auf Seite 1 wurde kein Text erkannt. Ein Hinweis ist in der Dokumentansicht verfügbar.' : 'Beispieltext auf Seite 1 wiederhergestellt.'); }
   });
+  function updateKeyboardInset() {
+    const viewport = window.visualViewport;
+    const editing = document.activeElement?.matches('input[type="text"], input[type="search"]');
+    const inset = viewport && editing ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop) : 0;
+    document.documentElement.style.setProperty('--keyboard-inset', `${inset}px`);
+  }
+  window.visualViewport?.addEventListener('resize', updateKeyboardInset);
+  window.visualViewport?.addEventListener('scroll', updateKeyboardInset);
+  document.addEventListener('focusin', updateKeyboardInset);
+  document.addEventListener('focusout', () => requestAnimationFrame(updateKeyboardInset));
   render(false);
 })();
