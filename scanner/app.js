@@ -311,7 +311,7 @@
     'page-change'() { if (!state.awaitingChange) return; state.awaitingChange = false; render(); announce('Neue Seite bereit. Das Dokument etwas nach rechts bewegen.'); },
     continue() { closeDialog(false); state.awaitingChange = false; render(); },
     'close-dialog'() { closeDialog(); },
-    'confirm-abort'() { closeDialog(false); state.pages = []; state.filename = ''; state.search = ''; state.notice = 'Scan verworfen.'; state.view = 'home'; render(); },
+    'confirm-abort'() { closeDialog(false); state.pages = []; state.filename = ''; state.search = ''; state.notice = ''; state.view = 'home'; render(); },
     folder() { chooseFolder(); },
     'folder-local'() { selectFolder(false); },
     'folder-cloud'() { selectFolder(true); },
