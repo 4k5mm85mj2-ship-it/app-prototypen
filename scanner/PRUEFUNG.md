@@ -1,4 +1,12 @@
-# Prüfung des Scanner-Klickdummys – Überarbeitung 3
+# Prüfung des Scanner-Klickdummys – Überarbeitung 4
+
+Ausgangscommit dieser Textbereinigung: `ab36ef9f917c7374b156191e6c40f49003e22c8c`.
+
+Gezielte Chromium-Prüfung vom 24.11.2026: Start und Kamera sowie ein Ablauf mit drei Seiten, Teilen, Einstellungen, Hilfe, Impressum/Datenschutz, Ordnerauswahl, Speichern und Rückkehr zum Start durchlaufen. In den geprüften sichtbaren Texten wurden keine Begriffe zu Klickdummy, Simulation, Prototyp oder Beispieldarstellung gefunden. Browser-Titel lautet „Scanner-App“. „Dokument ausrichten“ löst die vorhandene Aufnahmeinteraktion aus; „Fertig“ schließt die Exportdarstellungen ab. Nicht zur App gehörende Testoptionen sind entfernt. Keine zusätzlichen Erfolgsmeldungen behaupten einen echten Dateiexport. JavaScript-Syntax und Git-Whitespace-Prüfung bestanden.
+
+Die folgenden Ergebnisse dokumentieren die vorherige Layoutprüfung; deren praktische Grenzen gelten weiterhin.
+
+## Überarbeitung 3
 
 Datum: 24.11.2026. Ausgangscommit: `df09081138d80e3fd9ceef38126d11dabc1bc062`. Geprüft wurde der überarbeitete statische Web-Prototyp in Chromium mit Desktop-Viewport. Alle Aussagen betreffen die Simulation.
 

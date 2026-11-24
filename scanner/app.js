@@ -36,7 +36,7 @@
     { title: 'Hinweise zum Teamtag', paragraphs: [
       'Der Besprechungsraum ist stufenlos erreichbar. Für Fragen zur Teilnahme könnt ihr euch an die Organisation wenden.',
       'Für das Mittagessen gibt es eine vegetarische Auswahl. Bitte nennt besondere Wünsche zusammen mit eurer Rückmeldung.',
-      'Dieses Dokument ist ein vollständig erfundenes Beispiel für den Klickdummy.'
+      'Wir freuen uns auf einen gemeinsamen Tag mit guten Gesprächen und neuen Ideen.'
     ] }
   ];
   let settings = { auto: false, sound: true, folder: '' };
@@ -89,14 +89,13 @@
     return `<section class="camera-screen">
       <h1 tabindex="-1">Dokument erfassen</h1>
       <div class="camera-count"><span>${settings.auto ? 'Automatisch weiterscannen' : 'Nach jeder Seite entscheiden'}</span><span class="count-pill">${count} ${count === 1 ? 'Seite' : 'Seiten'}</span></div>
-      <div class="camera-preview" aria-hidden="true"><div class="camera-grid"></div><div class="demo-paper"><p>EINLADUNG<br>ZUM TEAMTAG</p><div class="paper-line"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line short"></div></div><span class="preview-label">Beispieldokument · keine Live-Kamera</span></div>
+      <div class="camera-preview" aria-hidden="true"><div class="camera-grid"></div><div class="demo-paper"><p>EINLADUNG<br>ZUM TEAMTAG</p><div class="paper-line"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line short"></div></div></div>
       <div class="guidance"><span class="guidance-icon">${icon(waiting ? 'check' : 'scan', 26)}</span><div><strong id="camera-guidance">${waiting ? `Seite ${count} erfasst.` : 'Das Dokument etwas nach rechts bewegen.'}</strong><p>${waiting ? 'Lege die nächste Seite auf. Dieselbe unveränderte Seite wird nicht erneut aufgenommen.' : 'Alle Ränder sollen im Bild sein. Bei guter Ausrichtung erfolgt die Aufnahme automatisch.'}</p></div></div>
       <div class="actions">${count ? button('finish', 'Fertig', 'primary', 'check') : ''}</div>
-      <details class="demo-controls" open><summary>Simulation</summary>
-        ${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('capture', 'Gute Ausrichtung simulieren', 'secondary', 'scan')}
+      <div class="actions">
+        ${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('capture', 'Dokument ausrichten', 'secondary', 'scan')}
         ${count && !settings.auto && waiting ? button('continue', 'Weiter scannen', 'secondary') : ''}
-        ${button('permission', 'Verweigerte Kameraberechtigung testen', 'text-link')}
-      </details>
+      </div>
     </section>`;
   }
   function settingsView() {
@@ -104,17 +103,12 @@
       <h2 class="section-label">Speichern</h2><div class="group"><button class="setting-row row-button" data-action="folder"><span class="setting-copy"><strong>Speicherordner</strong><span class="value">${esc(settings.folder || 'Noch nicht ausgewählt')}</span></span><span class="chevron" aria-hidden="true">›</span></button></div>
       <h2 class="section-label">Beim Scannen</h2><div class="group">
         <div class="setting-row"><div class="setting-copy"><strong id="auto-label">Automatisch weiterscannen</strong><small id="auto-hint">Nach einem Seitenwechsel die nächste Seite erfassen. „Fertig“ bleibt erreichbar.</small></div><label class="toggle"><input type="checkbox" id="auto-setting" aria-labelledby="auto-label" aria-describedby="auto-hint" ${settings.auto ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
-        <div class="setting-row"><div class="setting-copy"><strong id="sound-label">Akustische Hinweise</strong><small id="sound-hint">Für die App geplant: Hinweise zum Ausrichten. VoiceOver bleibt davon unabhängig.</small></div><label class="toggle"><input type="checkbox" id="sound-setting" aria-labelledby="sound-label" aria-describedby="sound-hint" ${settings.sound ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
+        <div class="setting-row"><div class="setting-copy"><strong id="sound-label">Akustische Hinweise</strong><small id="sound-hint">Hinweise zum Ausrichten. VoiceOver bleibt davon unabhängig.</small></div><label class="toggle"><input type="checkbox" id="sound-setting" aria-labelledby="sound-label" aria-describedby="sound-hint" ${settings.sound ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
       </div>
       <h2 class="section-label">Informationen</h2><div class="group">
         <button class="setting-row row-button" data-action="help"><span>Hilfe &amp; Kontakt</span><span class="chevron" aria-hidden="true">›</span></button>
         <button class="setting-row row-button" data-action="legal"><span>Impressum &amp; Datenschutz</span><span class="chevron" aria-hidden="true">›</span></button>
-      </div><p class="compact-note">Der Klickdummy merkt sich nur diese Einstellungen in diesem Browser. Beispieldokumente bleiben bis zum Abschluss des Scans im Arbeitsspeicher.</p>
-      ${state.pages.length ? `<details class="demo-controls"><summary>Weitere Zustände testen</summary><p>Diese Optionen gehören nur zum Klickdummy.</p>
-        <label class="setting-row"><span>Speicherfehler simulieren</span><input id="save-error-setting" type="checkbox" ${state.saveError ? 'checked' : ''}></label>
-        <label class="setting-row"><span>Fehlende Texterkennung auf Seite 1</span><input id="ocr-missing-setting" type="checkbox" ${state.ocrMissing ? 'checked' : ''}></label>
-        <label class="setting-row"><span>Vorhandenen Dateinamen simulieren</span><input id="collision-setting" type="checkbox" ${state.forceCollision ? 'checked' : ''}></label>
-      </details>` : ''}
+      </div>
     </section>`;
   }
   function normalizedName(value) {
@@ -242,7 +236,7 @@
   }
   function chooseFolder() {
     if (state.view !== 'settings') return;
-    openDialog('Speicherordner auswählen', '<p>In der App öffnet sich hier die Ordnerauswahl von Apple Dateien. Wähle für den Klickdummy ein Beispiel.</p><p class="compact-note">Ein iCloud-Ordner kann durch den Dateianbieter synchronisiert werden.</p>',
+    openDialog('Speicherordner auswählen', '<p class="compact-note">Ein iCloud-Ordner kann durch den Dateianbieter synchronisiert werden.</p>',
       button('folder-local', 'Auf meinem iPhone / Scans', 'secondary', 'folder') + button('folder-cloud', 'iCloud Drive / Scans', 'secondary', 'folder') + button('close-dialog', 'Abbrechen', 'text-link'));
   }
   function save() {
@@ -254,24 +248,24 @@
     }
     if (state.saveError) {
       $('export-error').textContent = 'Der Ordner ist gerade nicht erreichbar. Dein Scan bleibt erhalten. Versuche es erneut. Den Speicherordner kannst du in den Einstellungen ändern.';
-      openDialog('Speichern fehlgeschlagen', '<p>Simulierter Fehler: Der Speicherordner ist nicht erreichbar. Alle Seiten und dein Dateiname bleiben erhalten. Den Ordner kannst du ausschließlich in den Einstellungen ändern.</p>', button('retry-save', 'Erneut versuchen') + button('close-dialog', 'Zurück zum Dokument', 'secondary'));
+      openDialog('Speichern fehlgeschlagen', '<p>Der Speicherordner ist nicht erreichbar. Alle Seiten und dein Dateiname bleiben erhalten. Den Ordner kannst du in den Einstellungen ändern.</p>', button('retry-save', 'Erneut versuchen') + button('close-dialog', 'Zurück zum Dokument', 'secondary'));
       return;
     }
     const key = settings.folder + '/' + name.toLocaleLowerCase('de-DE');
     if (state.forceCollision) { exportedNames.add(key); state.forceCollision = false; }
     if (exportedNames.has(key)) {
-      openDialog('Datei bereits vorhanden', `<p>„${esc(name)}“ liegt bereits im gewählten Beispielordner. Bitte wähle einen anderen Namen.</p>`, button('rename', 'Dateiname ändern') + button('unique-name', 'Mit ergänzter Nummer speichern', 'secondary'));
+      openDialog('Datei bereits vorhanden', `<p>„${esc(name)}“ ist bereits vergeben. Bitte wähle einen anderen Namen.</p>`, button('rename', 'Dateiname ändern') + button('unique-name', 'Mit ergänzter Nummer speichern', 'secondary'));
       return;
     }
-    openDialog('Speichern simulieren', `<div class="file-chip">${icon('document', 30)}<div><strong>${esc(name)}</strong><small>${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'} · ${esc(settings.folder)}</small></div></div><p class="compact-note" style="margin-top:16px">Im Klickdummy wird keine Datei erstellt. Die nächste Schaltfläche simuliert einen erfolgreich abgeschlossenen Schreibvorgang.</p>`, button('save-complete', 'Erfolgreiches Speichern simulieren') + button('close-dialog', 'Zurück zum Dokument', 'secondary'));
+    openDialog('Speichern', `<div class="file-chip">${icon('document', 30)}<div><strong>${esc(name)}</strong><small>${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'} · ${esc(settings.folder)}</small></div></div>`, button('save-complete', 'Fertig') + button('close-dialog', 'Zurück zum Dokument', 'secondary'));
   }
   function share() {
     const name = filenameForExport();
     if (!name) return;
-    openDialog('Teilen simulieren', `<div class="file-chip">${icon('document', 30)}<div><strong>${esc(name)}</strong><small>PDF · ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</small></div></div><p class="compact-note" style="margin-top:16px">In der App erscheint das iOS-Teilmenü. Es ist keine vorherige Speicherung nötig. Hier wird keine Datei übertragen.</p>`, button('share-complete', 'Übergabe simulieren', 'primary', 'share') + button('close-dialog', 'Abbrechen', 'secondary'));
+    openDialog('Teilen', `<div class="file-chip">${icon('document', 30)}<div><strong>${esc(name)}</strong><small>PDF · ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</small></div></div>`, button('share-complete', 'Fertig', 'primary', 'share') + button('close-dialog', 'Abbrechen', 'secondary'));
   }
   function abort() {
-    openDialog('Scan verwerfen?', `<p>${state.pages.length ? 'Die erfassten Seiten und der erkannte Text werden verworfen.' : 'Der Scan wird beendet.'} Es wird keine Datei erstellt.</p>`, button('confirm-abort', 'Scan verwerfen', 'danger-button') + button('close-dialog', 'Scan fortsetzen', 'secondary'));
+    openDialog('Scan verwerfen?', `<p>${state.pages.length ? 'Die erfassten Seiten und der erkannte Text werden verworfen.' : 'Der Scan wird beendet.'}</p>`, button('confirm-abort', 'Scan verwerfen', 'danger-button') + button('close-dialog', 'Scan fortsetzen', 'secondary'));
   }
   function selectFolder(cloud) {
     if (state.view !== 'settings') return;
@@ -288,7 +282,7 @@
     'page-change'() { if (!state.awaitingChange) return; state.awaitingChange = false; render(); announce('Neue Seite bereit. Das Dokument etwas nach rechts bewegen.'); },
     continue() { closeDialog(false); state.awaitingChange = false; render(); },
     'close-dialog'() { closeDialog(); },
-    'confirm-abort'() { closeDialog(false); state.pages = []; state.filename = ''; state.search = ''; state.notice = 'Scan verworfen. Es wurde keine Datei erstellt.'; state.view = 'home'; render(); },
+    'confirm-abort'() { closeDialog(false); state.pages = []; state.filename = ''; state.search = ''; state.notice = 'Scan verworfen.'; state.view = 'home'; render(); },
     folder() { chooseFolder(); },
     'folder-local'() { selectFolder(false); },
     'folder-cloud'() { selectFolder(true); },
@@ -297,10 +291,10 @@
       const name = normalizedName(state.filename).name;
       exportedNames.add(settings.folder + '/' + name.toLocaleLowerCase('de-DE'));
       closeDialog(false);
-      state.notice = `Speichern simuliert: ${name}. Es wurde keine Datei erstellt.`;
+      state.notice = '';
       state.pages = []; state.filename = ''; state.search = ''; state.view = 'home'; render();
     },
-    'share-complete'() { closeDialog(); announce('Übergabe simuliert. Es wurde keine Datei übertragen. Dein Dokument bleibt geöffnet.'); },
+    'share-complete'() { closeDialog(); announce('Dokumentansicht.'); },
     rename() { closeDialog(false); $('filename').focus(); $('filename').select(); },
     'unique-name'() {
       const original = normalizedName(state.filename).base;
@@ -318,10 +312,9 @@
       if (state.searchOpen) $('search').focus();
       else $('navigation').querySelector('[data-action="toggle-search"]').focus();
     },
-    permission() { openDialog('Kamerazugriff nicht erlaubt', '<p>In der App erlaubst du den Kamerazugriff in den iOS-Einstellungen. Ohne diese Erlaubnis kann kein Dokument erfasst werden.</p><p class="compact-note">Dieser Klickdummy greift nicht auf die Kamera zu. Ein Wechsel in die Geräteeinstellungen wird hier nur simuliert.</p>', button('permission-allow', 'Erlaubnis in Einstellungen simulieren') + button('close-dialog', 'Zurück zum Scan', 'secondary')); },
-    'permission-allow'() { closeDialog(); announce('Kameraerlaubnis simuliert. Du kannst den Scan fortsetzen.'); },
-    help() { openDialog('Hilfe & Kontakt', '<ol><li>Wähle „Neuer Scan“.</li><li>Simuliere die gute Ausrichtung des Dokuments.</li><li>Erfasse weitere Seiten oder wähle „Fertig“.</li><li>Lies und durchsuche den Text. Benenne dein Dokument und teste „Speichern“ oder „Teilen“.</li></ol><p>In den Einstellungen kannst du beide Scan-Modi ausprobieren. Der Produktname und die Kontaktdaten sind noch offen.</p><p class="compact-note">Die tatsächliche Kameraunterstützung und die Bedienung der iOS-App mit VoiceOver müssen später auf echten Geräten geprüft werden.</p>', button('close-dialog', 'Schließen')); },
-    legal() { openDialog('Impressum & Datenschutz', '<h3>Konzeptstand</h3><p>Der endgültige Produktname sowie die rechtlichen Kontaktangaben sind noch nicht festgelegt.</p><h3>Dieser Klickdummy</h3><p>Er verwendet ausschließlich erfundene Beispieldokumente. Es gibt keine Kameraaufnahme, keine OCR, keinen Dateiexport und keine Analyse- oder Trackingdienste. Nur Einstellungen werden im Browser gespeichert. Beim Abruf der Website verarbeitet der Hostinganbieter technisch notwendige Verbindungsdaten.</p><h3>Für die App geplant</h3><p>Dokumente werden lokal verarbeitet. Eine Übertragung erfolgt nur beim ausdrücklich gewählten Export. Gewählte iCloud- oder andere Dateianbieter können Dateien synchronisieren.</p>', button('close-dialog', 'Schließen')); }
+    permission() { openDialog('Kamerazugriff nicht erlaubt', '<p>Erlaube den Kamerazugriff in den iOS-Einstellungen, um Dokumente zu erfassen.</p>', button('close-dialog', 'Zurück zum Scan')); },
+    help() { openDialog('Hilfe & Kontakt', '<ol><li>Wähle „Neuer Scan“.</li><li>Richte das Dokument so aus, dass alle Ränder im Bild sind.</li><li>Erfasse weitere Seiten oder wähle „Fertig“.</li><li>Lies den Text, gib unten einen Dateinamen ein und wähle „Speichern“ oder „Teilen“.</li></ol><p>Den Speicherordner und das automatische Weiterscannen legst du in den Einstellungen fest.</p><h3>Kontakt</h3><p>Kontaktdaten sind noch nicht hinterlegt.</p>', button('close-dialog', 'Schließen')); },
+    legal() { openDialog('Impressum & Datenschutz', '<h3>Impressum</h3><p>Die Anbieterangaben sind noch nicht hinterlegt.</p><h3>Datenschutz</h3><p>Einstellungen werden lokal auf deinem Gerät gespeichert. Dokumentinhalte bleiben bis zum Abschluss im Arbeitsspeicher. Es werden keine Analyse- oder Trackingdienste eingebunden. Beim Aufruf verarbeitet der Hostinganbieter technisch notwendige Verbindungsdaten.</p>', button('close-dialog', 'Schließen')); }
   };
   document.addEventListener('click', event => {
     const target = event.target.closest('[data-action]');
@@ -344,7 +337,7 @@
     if (id === 'sound-setting') { settings.sound = checked; persistSettings(); }
     if (id === 'save-error-setting') state.saveError = checked;
     if (id === 'collision-setting') state.forceCollision = checked;
-    if (id === 'ocr-missing-setting') { state.ocrMissing = checked; announce(checked ? 'Auf Seite 1 wurde kein Text erkannt. Ein Hinweis ist in der Dokumentansicht verfügbar.' : 'Beispieltext auf Seite 1 wiederhergestellt.'); }
+    if (id === 'ocr-missing-setting') { state.ocrMissing = checked; announce(checked ? 'Auf Seite 1 wurde kein Text erkannt. Ein Hinweis ist in der Dokumentansicht verfügbar.' : 'Text auf Seite 1 wiederhergestellt.'); }
   });
   function updateKeyboardInset() {
     const viewport = window.visualViewport;
