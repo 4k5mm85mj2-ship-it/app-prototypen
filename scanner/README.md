@@ -4,6 +4,8 @@ Interaktiver, eigenständiger Web-Prototyp nach den Projektquellen 00–12, Vers
 
 Überarbeitung vom 24.11.2026 nach Nutzerentscheidung: iOS-nahe Navigation und Einstellungen; illustrierte Scanner-Schaltfläche; Dokument im Mittelpunkt mit fester unterer Leiste **Speichern · Teilen · Verwerfen**. Die Ordnerauswahl erfolgt ausschließlich in den Einstellungen. Diese Entscheidung ersetzt für den Klickdummy die bisherige Ordnerauswahl beim Speichern aus F06.
 
+Überarbeitung 3: Das Dateinamenfeld sitzt jetzt direkt über den drei unteren Aktionen. Die Suche öffnet sich über die Lupe in der Navigation. Startseite und Dokumentansicht enthalten nur die nötigen Elemente. Die Gestaltung orientiert sich an den aktuellen App-Oberflächen: Systemhintergrund und Navigation wie in Barborant/Mitgemischt; Haupt-, Neben- und Verwerfen-Aktion mit der Farbgebung und den 20-Punkt-Rundungen des Mitgemischt-Standards. Die Scanner-Illustration bleibt erhalten und ist blau abgestimmt.
+
 ## Öffnen
 
 GitHub Pages: https://4k5mm85mj2-ship-it.github.io/app-prototypen/scanner/
@@ -12,9 +14,9 @@ GitHub Pages: https://4k5mm85mj2-ship-it.github.io/app-prototypen/scanner/
 
 ## Durchspielen
 
-1. Einmalig in **Einstellungen → Speicherordner** einen Beispielordner konfigurieren. Danach die illustrierte Schaltfläche **Neuer Scan** wählen. Im Bereich **Klickdummy bedienen** die gute Ausrichtung simulieren. Die übrige Kameraansicht bildet die geplante App ab.
+1. Einmalig in **Einstellungen → Speicherordner** einen Beispielordner konfigurieren. Danach die illustrierte Schaltfläche **Neuer Scan** wählen. Im Bereich **Simulation** die gute Ausrichtung simulieren. Die übrige Kameraansicht bildet die geplante App ab.
 2. Standardmodus: Nach jeder Aufnahme **Weiter scannen** oder **Fertig** wählen. Alternativ in den Einstellungen **Automatisch weiterscannen** einschalten: Nach der Aufnahme **Nächste Seite auflegen** und die gute Ausrichtung simulieren. **Fertig** ist nach mindestens einer Seite verfügbar.
-3. Ein bis mehrere Beispieldokumente lesen, durchsuchen und benennen. **Nächster Treffer** und **Vorheriger Treffer** setzen den Tastatur-/Screenreader-Fokus auf den Treffer. Die zweite Seite demonstriert unsichere OCR.
+3. Ein bis mehrere Beispieldokumente lesen. Die Lupe öffnet die Suche; **Nächster Treffer** und **Vorheriger Treffer** setzen den Tastatur-/Screenreader-Fokus auf den Treffer. Erneutes Antippen der Lupe schließt und leert die Suche. Der Dateiname wird im festen unteren Bereich eingegeben. Die zweite Seite demonstriert unsichere OCR.
 4. Am unteren Rand **Speichern**, **Teilen** oder **Verwerfen** wählen. **Speichern** verwendet immer den konfigurierten Ordner; den erfolgreichen Schreibvorgang ausdrücklich simulieren. Erst danach erscheint wieder der Start. Gleiche Namen werden nicht überschrieben. Ohne Ordner erscheint ein Hinweis, keine Ordnerauswahl. Über das Einstellungssymbol kann die Konfiguration geändert werden; **Zurück** erhält das aktuelle Dokument einschließlich Namen und Suchbegriff.
 5. **Teilen** zeigt eine Simulation des Teilmenüs und kehrt zum erhaltenen Dokument zurück.
 6. Bei geöffnetem Dokument in **Einstellungen → Weitere Zustände testen** Speicherfehler, Dateinamenskollision und fehlenden OCR-Text aktivieren. Verweigerte Kameraberechtigung lässt sich in der Kameraansicht demonstrieren.

@@ -46,7 +46,7 @@
     settings.sound = saved.sound !== false;
     if (['Auf meinem iPhone / Scans', 'iCloud Drive / Scans'].includes(saved.folder)) settings.folder = saved.folder;
   } catch { /* Settings are optional; the prototype also works without localStorage. */ }
-  const state = { view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '' };
+  const state = { view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', searchOpen: false, match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '' };
   const exportedNames = new Set();
   let returnFocus = null;
   function persistSettings() {
@@ -61,40 +61,38 @@
     announce('');
     const atHome = state.view === 'home';
     const isDocument = state.view === 'document';
+    document.body.classList.toggle('home-active', atHome);
     document.body.classList.toggle('document-active', isDocument);
     $('navigation').innerHTML = atHome
-      ? `<div class="wordmark"><span class="app-icon">${icon('scan', 22)}</span>Scanner-App</div><button class="nav-button" data-action="settings">${icon('settings', 21)}Einstellungen</button>`
+      ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Scanner-App</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
       : isDocument
-        ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
+        ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button></div>`
         : `<button class="nav-button" data-action="${state.view === 'settings' ? 'back-settings' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? '' : 'Neuer Scan'}</span>`;
     main.innerHTML = state.view === 'home' ? homeView() : state.view === 'settings' ? settingsView() : state.view === 'camera' ? cameraView() : documentView();
-    $('document-actions').innerHTML = isDocument
-      ? `<div class="document-toolbar" role="group" aria-label="Dokumentaktionen">${button('save', 'Speichern', 'toolbar-action', 'save')}${button('share', 'Teilen', 'toolbar-action', 'share')}${button('abort', 'Verwerfen', 'toolbar-action destructive', 'trash')}</div>`
-      : '';
+    $('document-actions').innerHTML = isDocument ? documentDock() : '';
+    dockObserver.disconnect();
+    if (isDocument) dockObserver.observe(main.ownerDocument.querySelector('.document-dock'));
+    updateDockHeight();
     if (focus) focusTitle();
   }
   function homeView() {
     return `<section class="home">
-      <p class="eyebrow">Einfach digitalisieren</p>
       <h1 tabindex="-1">Dein Papier.<br>Einfach lesbar.</h1>
       <p class="intro">Dokument erfassen, Text lesen und als PDF speichern oder teilen.</p>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
-      <button type="button" class="scan-start-button" data-action="start"><img src="scanner.svg" width="240" height="180" alt="" aria-hidden="true"><span>Neuer Scan</span>${icon('arrow', 24)}</button>
-      <p class="privacy-line">${icon('shield', 19)}<span>Für die App geplant: Verarbeitung auf deinem Gerät, ohne Konto.</span></p>
-      <div class="home-help"><h2>Ein Schritt nach dem anderen.</h2><p>Die Kamera unterstützt beim Ausrichten. Danach kannst du den erkannten Text in Ruhe lesen und durchsuchen.</p></div>
+      <button type="button" class="scan-start-button" data-action="start"><img src="scanner.svg?v=3" width="240" height="180" alt="" aria-hidden="true"><span>Neuer Scan</span></button>
     </section>`;
   }
   function cameraView() {
     const count = state.pages.length;
     const waiting = state.awaitingChange;
     return `<section class="camera-screen">
-      <p class="eyebrow">Erfassen</p><h1 tabindex="-1">Dokument erfassen</h1>
+      <h1 tabindex="-1">Dokument erfassen</h1>
       <div class="camera-count"><span>${settings.auto ? 'Automatisch weiterscannen' : 'Nach jeder Seite entscheiden'}</span><span class="count-pill">${count} ${count === 1 ? 'Seite' : 'Seiten'}</span></div>
       <div class="camera-preview" aria-hidden="true"><div class="camera-grid"></div><div class="demo-paper"><p>EINLADUNG<br>ZUM TEAMTAG</p><div class="paper-line"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line short"></div></div><span class="preview-label">Beispieldokument · keine Live-Kamera</span></div>
       <div class="guidance"><span class="guidance-icon">${icon(waiting ? 'check' : 'scan', 26)}</span><div><strong id="camera-guidance">${waiting ? `Seite ${count} erfasst.` : 'Das Dokument etwas nach rechts bewegen.'}</strong><p>${waiting ? 'Lege die nächste Seite auf. Dieselbe unveränderte Seite wird nicht erneut aufgenommen.' : 'Alle Ränder sollen im Bild sein. Bei guter Ausrichtung erfolgt die Aufnahme automatisch.'}</p></div></div>
       <div class="actions">${count ? button('finish', 'Fertig', 'primary', 'check') : ''}</div>
-      <details class="demo-controls" open><summary>Klickdummy bedienen</summary>
-        <p>Ohne Kamerazugriff: Über diese Schaltflächen spielst du Ausrichtung und Seitenwechsel durch.</p>
+      <details class="demo-controls" open><summary>Simulation</summary>
         ${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('capture', 'Gute Ausrichtung simulieren', 'secondary', 'scan')}
         ${count && !settings.auto && waiting ? button('continue', 'Weiter scannen', 'secondary') : ''}
         ${button('permission', 'Verweigerte Kameraberechtigung testen', 'text-link')}
@@ -102,7 +100,7 @@
     </section>`;
   }
   function settingsView() {
-    return `<section class="settings-page"><p class="eyebrow">So, wie du es brauchst</p><h1 tabindex="-1">Einstellungen</h1>
+    return `<section class="settings-page"><h1 tabindex="-1">Einstellungen</h1>
       <h2 class="section-label">Speichern</h2><div class="group"><button class="setting-row row-button" data-action="folder"><span class="setting-copy"><strong>Speicherordner</strong><span class="value">${esc(settings.folder || 'Noch nicht ausgewählt')}</span></span><span class="chevron" aria-hidden="true">›</span></button></div>
       <h2 class="section-label">Beim Scannen</h2><div class="group">
         <div class="setting-row"><div class="setting-copy"><strong id="auto-label">Automatisch weiterscannen</strong><small id="auto-hint">Nach einem Seitenwechsel die nächste Seite erfassen. „Fertig“ bleibt erreichbar.</small></div><label class="toggle"><input type="checkbox" id="auto-setting" aria-labelledby="auto-label" aria-describedby="auto-hint" ${settings.auto ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
@@ -127,14 +125,19 @@
     return { name: base + '.pdf', base };
   }
   function documentView() {
-    const normalized = normalizedName(state.filename);
     return `<section class="document-screen"><h1 class="sr-only" tabindex="-1">Dein Dokument, ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</h1>
-      <div class="document-name"><label class="field" for="filename">Dateiname</label><input class="text-input" id="filename" type="text" autocomplete="off" spellcheck="false" value="${esc(state.filename)}" aria-describedby="filename-hint filename-error"></div>
-      <p class="sr-only" id="filename-hint">${normalized.name ? 'PDF: ' + esc(normalized.name) : 'Die Endung .pdf wird automatisch ergänzt.'}</p><p id="filename-error" class="error-message" role="alert"></p>
-      ${!settings.folder ? '<p class="folder-hint">Zum Speichern bitte einmalig in den Einstellungen einen Speicherordner festlegen.</p>' : ''}<p id="export-error" class="error-message" role="alert"></p>
-      <div class="document-search"><label class="sr-only" for="search">Dokument durchsuchen</label><div class="search-box">${icon('search', 20)}<input class="text-input" type="search" id="search" placeholder="Dokument durchsuchen" value="${esc(state.search)}" autocomplete="off" aria-describedby="search-status"></div>
+      <div class="document-search" id="search-panel" ${state.searchOpen ? '' : 'hidden'}><label class="sr-only" for="search">Dokument durchsuchen</label><div class="search-box">${icon('search', 20)}<input class="text-input" type="search" id="search" placeholder="Dokument durchsuchen" value="${esc(state.search)}" autocomplete="off" aria-describedby="search-status"></div>
       <div class="search-nav"><span id="search-status" role="status" aria-atomic="true">Suchbegriff eingeben</span><button class="secondary" id="previous-match" data-action="previous-match" disabled>Vorheriger Treffer</button><button class="secondary" id="next-match" data-action="next-match" disabled>Nächster Treffer</button></div></div>
       <div class="document-pages" id="document-pages">${pageMarkup()}</div>
+    </section>`;
+  }
+  function documentDock() {
+    const normalized = normalizedName(state.filename);
+    return `<section class="document-dock" aria-label="Dateiname und Dokumentaktionen">
+      <div class="document-name"><label for="filename">Dateiname</label><input class="text-input" id="filename" type="text" autocomplete="off" spellcheck="false" value="${esc(state.filename)}" aria-describedby="filename-hint filename-error"></div>
+      <p class="sr-only" id="filename-hint">${normalized.name ? 'PDF: ' + esc(normalized.name) : 'Die Endung .pdf wird automatisch ergänzt.'}</p>
+      <p id="filename-error" class="error-message" role="alert"></p><p id="export-error" class="error-message" role="alert"></p>
+      <div class="document-toolbar" role="group" aria-label="Dokumentaktionen">${button('save', 'Speichern', 'toolbar-action primary', 'save')}${button('share', 'Teilen', 'toolbar-action secondary', 'share')}${button('abort', 'Verwerfen', 'toolbar-action destructive', 'trash')}</div>
     </section>`;
   }
   function pageMarkup() {
@@ -200,6 +203,7 @@
     state.pages = [];
     state.awaitingChange = false;
     state.search = '';
+    state.searchOpen = false;
     state.filename = '';
     state.notice = '';
     state.saveError = false;
@@ -307,6 +311,13 @@
     },
     'next-match'() { moveMatch(1); },
     'previous-match'() { moveMatch(-1); },
+    'toggle-search'() {
+      state.searchOpen = !state.searchOpen;
+      if (!state.searchOpen) state.search = '';
+      render(false); updateSearch();
+      if (state.searchOpen) $('search').focus();
+      else $('navigation').querySelector('[data-action="toggle-search"]').focus();
+    },
     permission() { openDialog('Kamerazugriff nicht erlaubt', '<p>In der App erlaubst du den Kamerazugriff in den iOS-Einstellungen. Ohne diese Erlaubnis kann kein Dokument erfasst werden.</p><p class="compact-note">Dieser Klickdummy greift nicht auf die Kamera zu. Ein Wechsel in die Geräteeinstellungen wird hier nur simuliert.</p>', button('permission-allow', 'Erlaubnis in Einstellungen simulieren') + button('close-dialog', 'Zurück zum Scan', 'secondary')); },
     'permission-allow'() { closeDialog(); announce('Kameraerlaubnis simuliert. Du kannst den Scan fortsetzen.'); },
     help() { openDialog('Hilfe & Kontakt', '<ol><li>Wähle „Neuer Scan“.</li><li>Simuliere die gute Ausrichtung des Dokuments.</li><li>Erfasse weitere Seiten oder wähle „Fertig“.</li><li>Lies und durchsuche den Text. Benenne dein Dokument und teste „Speichern“ oder „Teilen“.</li></ol><p>In den Einstellungen kannst du beide Scan-Modi ausprobieren. Der Produktname und die Kontaktdaten sind noch offen.</p><p class="compact-note">Die tatsächliche Kameraunterstützung und die Bedienung der iOS-App mit VoiceOver müssen später auf echten Geräten geprüft werden.</p>', button('close-dialog', 'Schließen')); },
@@ -345,5 +356,10 @@
   window.visualViewport?.addEventListener('scroll', updateKeyboardInset);
   document.addEventListener('focusin', updateKeyboardInset);
   document.addEventListener('focusout', () => requestAnimationFrame(updateKeyboardInset));
+  function updateDockHeight() {
+    const height = document.querySelector('.document-dock')?.getBoundingClientRect().height || 0;
+    document.documentElement.style.setProperty('--document-dock-height', `${height}px`);
+  }
+  const dockObserver = new ResizeObserver(updateDockHeight);
   render(false);
 })();
