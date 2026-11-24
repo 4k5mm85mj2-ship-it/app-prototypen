@@ -1,3 +1,11 @@
+# Dunkeldesign-Korrektur
+
+24.11.2026: Große Hauptaktionsflächen im Dunkeldesign auf #1f4d80 mit weißem Text und heller Kontur umgestellt. Grundlage ist die dunkle Sekundärfläche von Mitgemischts AppActionButtonStyle (RGB 0.12/0.30/0.50). Die helle Hintergrundfläche der Scanner-Illustration entfällt. Fokusumrandungen bleiben erhalten.
+
+Chromium-Sichtprüfung mit einer ausschließlich lokalen CSS-Testfassung, die den vorhandenen Dark-Media-Block aktiviert: Button rgb(31,77,128), Text weiß, Bildunterlage transparent. Reguläre helle Fassung gegengeprüft: Hauptaktion weiterhin rgb(0,51,107), Text weiß. Keine tatsächliche iPhone-/Farbumkehr-Abnahme. Testdateien werden nicht veröffentlicht.
+
+---
+
 # Prüfung des Scanner-Klickdummys – Überarbeitung 4
 
 Ausgangscommit dieser Textbereinigung: `ab36ef9f917c7374b156191e6c40f49003e22c8c`.
