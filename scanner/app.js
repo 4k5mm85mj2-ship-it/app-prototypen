@@ -65,7 +65,7 @@
     document.body.classList.toggle('home-active', atHome);
     document.body.classList.toggle('document-active', isDocument);
     $('navigation').innerHTML = atHome
-      ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Scanner-App</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
+      ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokumaro</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
       : isInfo ? `<button class="nav-button" data-action="back-info">${icon('back',20)}Einstellungen</button>`
       : isDocument
         ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button></div>`
@@ -79,8 +79,8 @@
   }
   function homeView() {
     return `<section class="home">
-      <h1 tabindex="-1">Dein Papier.<br>Einfach lesbar.</h1>
-      <p class="intro">Dokument erfassen, Text lesen und als PDF speichern oder teilen.</p>
+      <h1 tabindex="-1">Einfach digital.<br>Für alle.</h1>
+      <p class="intro">Scannen. Lesen. Teilen.</p>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
       <button type="button" class="scan-start-button" data-action="start"><img src="scanner.svg?v=3" width="240" height="180" alt="" aria-hidden="true"><span>Neuer Scan</span></button>
     </section>`;
@@ -109,21 +109,21 @@
       </div>
       <h2 class="section-label">Informationen</h2><div class="group">
         <button class="setting-row row-button" data-action="help"><span>Hilfe und Kontakt</span><span class="chevron" aria-hidden="true">›</span></button>
-        <button class="setting-row row-button" data-action="support"><span>Scanner-App unterstützen</span><span class="chevron" aria-hidden="true">›</span></button>
+        <button class="setting-row row-button" data-action="support"><span>Dokumaro unterstützen</span><span class="chevron" aria-hidden="true">›</span></button>
         <button class="setting-row row-button" data-action="imprint"><span>Impressum</span><span class="chevron" aria-hidden="true">›</span></button>
         <button class="setting-row row-button" data-action="privacy"><span>Datenschutz</span><span class="chevron" aria-hidden="true">›</span></button>
       </div>
     </section>`;
   }
   function mailLink(label, subject) {
-    const href = 'mailto:brg.entwicklung@gmail.com?subject=' + encodeURIComponent('Scanner-App – ' + subject);
+    const href = 'mailto:brg.entwicklung@gmail.com?subject=' + encodeURIComponent('Dokumaro – ' + subject);
     return `<a class="setting-row row-button mail-link" href="${esc(href)}"><span>${label}</span><span class="chevron" aria-hidden="true">›</span></a>`;
   }
   function informationView() {
-    const titles = {help:'Hilfe und Kontakt',support:'Scanner-App unterstützen',imprint:'Impressum',privacy:'Datenschutz'};
+    const titles = {help:'Hilfe und Kontakt',support:'Dokumaro unterstützen',imprint:'Impressum',privacy:'Datenschutz'};
     let content = '';
-    if (state.view === 'help') content = `<div class="group information-copy"><h2>Schön, dass du Scanner-App nutzt!</h2><p>Ich entwickle Apps aus Überzeugung: Sie sollen den Alltag einfacher machen, Freude bereiten und für alle Menschen gut bedienbar sein – unabhängig davon, ob sie mit oder ohne Einschränkungen genutzt werden.</p><p>Dabei gilt für mich: Weniger ist mehr. Klare Funktionen, durchdachtes Design und echte Barrierefreiheit stehen im Mittelpunkt.</p><p>Hast du eine Idee, einen Verbesserungsvorschlag oder funktioniert etwas nicht wie erwartet? Dann schreib mir gerne. Deine Rückmeldung hilft mir, Scanner-App weiterzuentwickeln.</p></div><div class="group">${mailLink('Problem melden','Problem melden')}${mailLink('Idee oder Feedback senden','Idee oder Feedback')}<button class="setting-row row-button" data-action="copy-address">Supportadresse kopieren</button></div><p id="contact-status" role="status"></p>`;
-    if (state.view === 'support') content = `<div class="group information-copy"><p>Scanner-App soll für alle zugänglich bleiben. Wenn dir die App gefällt, kannst du ihre Weiterentwicklung freiwillig unterstützen.</p></div><h2 class="section-label">Wähle einen Betrag</h2><div class="group information-copy"><p id="support-status" role="status">Die Unterstützungsbeträge sind gerade nicht verfügbar. Bitte versuche es später erneut.</p>${button('retry-support','Erneut versuchen','secondary')}</div><p class="compact-note">Freiwillig · Einmalig</p>`;
+    if (state.view === 'help') content = `<div class="group information-copy"><h2>Schön, dass du Dokumaro nutzt!</h2><p>Ich entwickle Apps aus Überzeugung: Sie sollen den Alltag einfacher machen, Freude bereiten und für alle Menschen gut bedienbar sein – unabhängig davon, ob sie mit oder ohne Einschränkungen genutzt werden.</p><p>Dabei gilt für mich: Weniger ist mehr. Klare Funktionen, durchdachtes Design und echte Barrierefreiheit stehen im Mittelpunkt.</p><p>Hast du eine Idee, einen Verbesserungsvorschlag oder funktioniert etwas nicht wie erwartet? Dann schreib mir gerne. Deine Rückmeldung hilft mir, Dokumaro weiterzuentwickeln.</p></div><div class="group">${mailLink('Problem melden','Problem melden')}${mailLink('Idee oder Feedback senden','Idee oder Feedback')}<button class="setting-row row-button" data-action="copy-address">Supportadresse kopieren</button></div><p id="contact-status" role="status"></p>`;
+    if (state.view === 'support') content = `<div class="group information-copy"><p>Dokumaro soll für alle zugänglich bleiben. Wenn dir die App gefällt, kannst du ihre Weiterentwicklung freiwillig unterstützen.</p></div><h2 class="section-label">Wähle einen Betrag</h2><div class="group information-copy"><p id="support-status" role="status">Die Unterstützungsbeträge sind gerade nicht verfügbar. Bitte versuche es später erneut.</p>${button('retry-support','Erneut versuchen','secondary')}</div><p class="compact-note">Freiwillig · Einmalig</p>`;
     if (state.view === 'imprint') content = `<h2 class="section-label">Anbieter</h2><div class="group information-copy address-block"><strong>Bruno Geßner</strong><div>c/o POSTFLEX PFX-425-383<br>Emsdettener Straße 10<br>48268 Greven</div></div><h2 class="section-label contact-heading">Kontakt</h2><div class="group information-copy"><p>E-Mail: brg.entwicklung@gmail.com</p>${mailLink('E-Mail schreiben','Kontakt')}</div>`;
     if (state.view === 'privacy') content = `<div class="group information-copy"><p>Einstellungen werden lokal auf deinem Gerät gespeichert. Dokumentinhalte bleiben bis zum Abschluss im Arbeitsspeicher.</p><p>Es werden keine Analyse- oder Trackingdienste eingebunden. Beim Aufruf verarbeitet der Hostinganbieter technisch notwendige Verbindungsdaten.</p></div>`;
     return `<section class="settings-page"><h1 tabindex="-1">${titles[state.view]}</h1>${content}</section>`;

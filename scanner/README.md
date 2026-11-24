@@ -1,6 +1,6 @@
-# Scanner-App – Klickdummy
+# Dokumaro – Klickdummy
 
-Interaktiver, eigenständiger Web-Prototyp nach den Projektquellen 00–12, Version 1.0 vom 24.11.2026. Arbeitstitel **Scanner-App**; Produktname und Kontaktangaben bleiben offen.
+Interaktiver, eigenständiger Web-Prototyp nach den Projektquellen 00–12, Version 1.0 vom 24.11.2026. Produktname **Dokumaro**; Claim **„Einfach digital. Für alle.“**; App-Store-Name **„Dokumaro – Dokumentenscanner“**; Untertitel **„Scannen. Lesen. Teilen.“**. Markenwerte: Einfachheit, Barrierefreiheit und Selbstständigkeit. Die Festlegung stammt aus der vom Nutzer referenzierten Namensentscheidung im anderen Chat.
 
 Überarbeitung vom 24.11.2026 nach Nutzerentscheidung: iOS-nahe Navigation und Einstellungen; illustrierte Scanner-Schaltfläche; Dokument im Mittelpunkt mit fester unterer Leiste **Speichern · Teilen · Verwerfen**. Die Ordnerauswahl erfolgt ausschließlich in den Einstellungen. Diese Entscheidung ersetzt für den Klickdummy die bisherige Ordnerauswahl beim Speichern aus F06.
 

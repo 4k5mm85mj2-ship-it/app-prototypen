@@ -1,3 +1,7 @@
+# Produktname Dokumaro
+
+Die Namensentscheidung aus dem anderen Chat übernommen: Dokumaro; Claim „Einfach digital. Für alle.“; App-Store-Name „Dokumaro – Dokumentenscanner“; Untertitel „Scannen. Lesen. Teilen.“. Chromium-Prüfung: Startseite, Browser-Titel, Hilfe/Kontakt, Dokumaro unterstützen und Mailto-Betreff stimmen überein. Keine Mail versandt. Keine Funktions- oder Layoutänderung. JavaScript-Syntax und Whitespace geprüft.
+
 # Einstellungsüberarbeitung
 
 24.11.2026: In Chromium native Speicherort-Auswahl auf iCloud Drive / Scans geändert. Navigation Einstellungen → Kontakt → Einstellungen → Unterstützen → Einstellungen → Impressum geprüft. Kontaktlinks anhand des href geprüft: BRG-Adresse mit Scanner-App-Betreff; keine Mail versandt. Unterstützung zeigt Nichtverfügbarkeit, erneuter Versuch löst keine Zahlung aus. Impressum mit kompakter Postflex-Anschrift und separatem Kontaktblock anhand Mitgemischt geprüft. JavaScript-Syntax und Whitespace-Prüfung bestanden. Reale VoiceOver-/iOS-Picker-Abnahme weiterhin offen.

@@ -1,6 +1,6 @@
 # app-prototypen
 
-## Scanner-App
+## Dokumaro
 
 [Klickdummy öffnen](https://4k5mm85mj2-ship-it.github.io/app-prototypen/scanner/)
 
