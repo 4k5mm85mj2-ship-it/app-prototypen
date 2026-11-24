@@ -61,14 +61,16 @@
     announce('');
     const atHome = state.view === 'home';
     const isDocument = state.view === 'document';
+    const isInfo = ['help','support','imprint','privacy'].includes(state.view);
     document.body.classList.toggle('home-active', atHome);
     document.body.classList.toggle('document-active', isDocument);
     $('navigation').innerHTML = atHome
       ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Scanner-App</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
+      : isInfo ? `<button class="nav-button" data-action="back-info">${icon('back',20)}Einstellungen</button>`
       : isDocument
         ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button></div>`
         : `<button class="nav-button" data-action="${state.view === 'settings' ? 'back-settings' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? '' : 'Neuer Scan'}</span>`;
-    main.innerHTML = state.view === 'home' ? homeView() : state.view === 'settings' ? settingsView() : state.view === 'camera' ? cameraView() : documentView();
+    main.innerHTML = state.view === 'home' ? homeView() : state.view === 'settings' ? settingsView() : state.view === 'camera' ? cameraView() : isInfo ? informationView() : documentView();
     $('document-actions').innerHTML = isDocument ? documentDock() : '';
     dockObserver.disconnect();
     if (isDocument) dockObserver.observe(main.ownerDocument.querySelector('.document-dock'));
@@ -100,16 +102,31 @@
   }
   function settingsView() {
     return `<section class="settings-page"><h1 tabindex="-1">Einstellungen</h1>
-      <h2 class="section-label">Speichern</h2><div class="group"><button class="setting-row row-button" data-action="folder"><span class="setting-copy"><strong>Speicherordner</strong><span class="value">${esc(settings.folder || 'Noch nicht ausgewählt')}</span></span><span class="chevron" aria-hidden="true">›</span></button></div>
+      <h2 class="section-label">Speichern</h2><div class="group"><div class="setting-row folder-picker"><label for="folder-setting">Speicherort</label><select id="folder-setting"><option value="" disabled ${!settings.folder ? 'selected' : ''}>Auswählen</option>${['Auf meinem iPhone / Scans','iCloud Drive / Scans'].map(folder => `<option value="${folder}" ${settings.folder === folder ? 'selected' : ''}>${folder}</option>`).join('')}</select></div></div>
       <h2 class="section-label">Beim Scannen</h2><div class="group">
-        <div class="setting-row"><div class="setting-copy"><strong id="auto-label">Automatisch weiterscannen</strong><small id="auto-hint">Nach einem Seitenwechsel die nächste Seite erfassen. „Fertig“ bleibt erreichbar.</small></div><label class="toggle"><input type="checkbox" id="auto-setting" aria-labelledby="auto-label" aria-describedby="auto-hint" ${settings.auto ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
-        <div class="setting-row"><div class="setting-copy"><strong id="sound-label">Akustische Hinweise</strong><small id="sound-hint">Hinweise zum Ausrichten. VoiceOver bleibt davon unabhängig.</small></div><label class="toggle"><input type="checkbox" id="sound-setting" aria-labelledby="sound-label" aria-describedby="sound-hint" ${settings.sound ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
+        <div class="setting-row"><div class="setting-copy"><strong id="auto-label">Automatisch weiterscannen</strong><small id="auto-hint">Die nächste Seite wird ohne Nachfrage gescannt.</small></div><label class="toggle"><input type="checkbox" id="auto-setting" aria-labelledby="auto-label" aria-describedby="auto-hint" ${settings.auto ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
+        <div class="setting-row"><div class="setting-copy"><strong id="sound-label">Akustische Hinweise</strong><small id="sound-hint">Die App sagt dir, wie du das Dokument halten sollst.</small></div><label class="toggle"><input type="checkbox" id="sound-setting" aria-labelledby="sound-label" aria-describedby="sound-hint" ${settings.sound ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
       </div>
       <h2 class="section-label">Informationen</h2><div class="group">
-        <button class="setting-row row-button" data-action="help"><span>Hilfe &amp; Kontakt</span><span class="chevron" aria-hidden="true">›</span></button>
-        <button class="setting-row row-button" data-action="legal"><span>Impressum &amp; Datenschutz</span><span class="chevron" aria-hidden="true">›</span></button>
+        <button class="setting-row row-button" data-action="help"><span>Hilfe und Kontakt</span><span class="chevron" aria-hidden="true">›</span></button>
+        <button class="setting-row row-button" data-action="support"><span>Scanner-App unterstützen</span><span class="chevron" aria-hidden="true">›</span></button>
+        <button class="setting-row row-button" data-action="imprint"><span>Impressum</span><span class="chevron" aria-hidden="true">›</span></button>
+        <button class="setting-row row-button" data-action="privacy"><span>Datenschutz</span><span class="chevron" aria-hidden="true">›</span></button>
       </div>
     </section>`;
+  }
+  function mailLink(label, subject) {
+    const href = 'mailto:brg.entwicklung@gmail.com?subject=' + encodeURIComponent('Scanner-App – ' + subject);
+    return `<a class="setting-row row-button mail-link" href="${esc(href)}"><span>${label}</span><span class="chevron" aria-hidden="true">›</span></a>`;
+  }
+  function informationView() {
+    const titles = {help:'Hilfe und Kontakt',support:'Scanner-App unterstützen',imprint:'Impressum',privacy:'Datenschutz'};
+    let content = '';
+    if (state.view === 'help') content = `<div class="group information-copy"><h2>Schön, dass du Scanner-App nutzt!</h2><p>Ich entwickle Apps aus Überzeugung: Sie sollen den Alltag einfacher machen, Freude bereiten und für alle Menschen gut bedienbar sein – unabhängig davon, ob sie mit oder ohne Einschränkungen genutzt werden.</p><p>Dabei gilt für mich: Weniger ist mehr. Klare Funktionen, durchdachtes Design und echte Barrierefreiheit stehen im Mittelpunkt.</p><p>Hast du eine Idee, einen Verbesserungsvorschlag oder funktioniert etwas nicht wie erwartet? Dann schreib mir gerne. Deine Rückmeldung hilft mir, Scanner-App weiterzuentwickeln.</p></div><div class="group">${mailLink('Problem melden','Problem melden')}${mailLink('Idee oder Feedback senden','Idee oder Feedback')}<button class="setting-row row-button" data-action="copy-address">Supportadresse kopieren</button></div><p id="contact-status" role="status"></p>`;
+    if (state.view === 'support') content = `<div class="group information-copy"><p>Scanner-App soll für alle zugänglich bleiben. Wenn dir die App gefällt, kannst du ihre Weiterentwicklung freiwillig unterstützen.</p></div><h2 class="section-label">Wähle einen Betrag</h2><div class="group information-copy"><p id="support-status" role="status">Die Unterstützungsbeträge sind gerade nicht verfügbar. Bitte versuche es später erneut.</p>${button('retry-support','Erneut versuchen','secondary')}</div><p class="compact-note">Freiwillig · Einmalig</p>`;
+    if (state.view === 'imprint') content = `<h2 class="section-label">Anbieter</h2><div class="group information-copy address-block"><strong>Bruno Geßner</strong><div>c/o POSTFLEX PFX-425-383<br>Emsdettener Straße 10<br>48268 Greven</div></div><h2 class="section-label contact-heading">Kontakt</h2><div class="group information-copy"><p>E-Mail: brg.entwicklung@gmail.com</p>${mailLink('E-Mail schreiben','Kontakt')}</div>`;
+    if (state.view === 'privacy') content = `<div class="group information-copy"><p>Einstellungen werden lokal auf deinem Gerät gespeichert. Dokumentinhalte bleiben bis zum Abschluss im Arbeitsspeicher.</p><p>Es werden keine Analyse- oder Trackingdienste eingebunden. Beim Aufruf verarbeitet der Hostinganbieter technisch notwendige Verbindungsdaten.</p></div>`;
+    return `<section class="settings-page"><h1 tabindex="-1">${titles[state.view]}</h1>${content}</section>`;
   }
   function normalizedName(value) {
     const base = value.trim().replace(/(?:\.pdf)+$/gi, '').trim();
@@ -313,8 +330,17 @@
       else $('navigation').querySelector('[data-action="toggle-search"]').focus();
     },
     permission() { openDialog('Kamerazugriff nicht erlaubt', '<p>Erlaube den Kamerazugriff in den iOS-Einstellungen, um Dokumente zu erfassen.</p>', button('close-dialog', 'Zurück zum Scan')); },
-    help() { openDialog('Hilfe & Kontakt', '<ol><li>Wähle „Neuer Scan“.</li><li>Richte das Dokument so aus, dass alle Ränder im Bild sind.</li><li>Erfasse weitere Seiten oder wähle „Fertig“.</li><li>Lies den Text, gib unten einen Dateinamen ein und wähle „Speichern“ oder „Teilen“.</li></ol><p>Den Speicherordner und das automatische Weiterscannen legst du in den Einstellungen fest.</p><h3>Kontakt</h3><p>Kontaktdaten sind noch nicht hinterlegt.</p>', button('close-dialog', 'Schließen')); },
-    legal() { openDialog('Impressum & Datenschutz', '<h3>Impressum</h3><p>Die Anbieterangaben sind noch nicht hinterlegt.</p><h3>Datenschutz</h3><p>Einstellungen werden lokal auf deinem Gerät gespeichert. Dokumentinhalte bleiben bis zum Abschluss im Arbeitsspeicher. Es werden keine Analyse- oder Trackingdienste eingebunden. Beim Aufruf verarbeitet der Hostinganbieter technisch notwendige Verbindungsdaten.</p>', button('close-dialog', 'Schließen')); }
+    help() { state.view = 'help'; render(); },
+    support() { state.view = 'support'; render(); },
+    imprint() { state.view = 'imprint'; render(); },
+    privacy() { state.view = 'privacy'; render(); },
+    'back-info'() { state.view = 'settings'; render(); },
+    async 'copy-address'() {
+      try { await navigator.clipboard.writeText('brg.entwicklung@gmail.com'); $('contact-status').textContent = 'Supportadresse kopiert.'; }
+      catch { $('contact-status').textContent = 'Supportadresse: brg.entwicklung@gmail.com'; }
+    },
+    'retry-support'() { $('support-status').textContent = 'Die Unterstützungsbeträge sind gerade nicht verfügbar. Bitte versuche es später erneut.'; }
+
   };
   document.addEventListener('click', event => {
     const target = event.target.closest('[data-action]');
@@ -333,6 +359,7 @@
   });
   document.addEventListener('change', event => {
     const {id, checked} = event.target;
+    if (id === 'folder-setting') { settings.folder = event.target.value; persistSettings(); }
     if (id === 'auto-setting') { settings.auto = checked; persistSettings(); }
     if (id === 'sound-setting') { settings.sound = checked; persistSettings(); }
     if (id === 'save-error-setting') state.saveError = checked;

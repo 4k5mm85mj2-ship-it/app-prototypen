@@ -1,3 +1,7 @@
+# Einstellungsüberarbeitung
+
+24.11.2026: In Chromium native Speicherort-Auswahl auf iCloud Drive / Scans geändert. Navigation Einstellungen → Kontakt → Einstellungen → Unterstützen → Einstellungen → Impressum geprüft. Kontaktlinks anhand des href geprüft: BRG-Adresse mit Scanner-App-Betreff; keine Mail versandt. Unterstützung zeigt Nichtverfügbarkeit, erneuter Versuch löst keine Zahlung aus. Impressum mit kompakter Postflex-Anschrift und separatem Kontaktblock anhand Mitgemischt geprüft. JavaScript-Syntax und Whitespace-Prüfung bestanden. Reale VoiceOver-/iOS-Picker-Abnahme weiterhin offen.
+
 # Dunkeldesign-Korrektur
 
 24.11.2026: Große Hauptaktionsflächen im Dunkeldesign auf #1f4d80 mit weißem Text und heller Kontur umgestellt. Grundlage ist die dunkle Sekundärfläche von Mitgemischts AppActionButtonStyle (RGB 0.12/0.30/0.50). Die helle Hintergrundfläche der Scanner-Illustration entfällt. Fokusumrandungen bleiben erhalten.
