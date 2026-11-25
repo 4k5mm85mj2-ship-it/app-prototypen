@@ -69,10 +69,11 @@
     document.body.classList.toggle('home-active', atHome);
     document.querySelector('.skip-link').hidden = atHome;
     document.body.classList.toggle('camera-active', state.view === 'camera');
+    document.body.classList.toggle('information-active', isInfo);
     document.body.classList.toggle('document-active', isDocument);
     $('navigation').innerHTML = atHome
       ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title" aria-hidden="true">Dokumaro</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
-      : isInfo ? `<button class="nav-button" data-action="back-info">${icon('back',20)}Einstellungen</button>`
+      : isInfo ? `<button class="nav-button" data-action="back-info">${icon('back',20)}Zurück</button>`
       : isDocument
         ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button></div>`
         : `<button class="nav-button" data-action="${state.view === 'settings' ? 'back-settings' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? '' : 'Neuer Scan'}</span>`;
@@ -86,8 +87,7 @@
   }
   function homeView() {
     return `<section class="home">
-      <h1 aria-hidden="true">Einfach digital.<br>Für alle.</h1>
-      <p class="intro" aria-hidden="true">Scannen. Lesen. Teilen.</p>
+      <div class="home-copy" role="group" tabindex="0" aria-label="Einfach digital. Für alle. Scannen. Lesen. Teilen."><h1 aria-hidden="true">Einfach digital.<br>Für alle.</h1><p class="intro" aria-hidden="true">Scannen. Lesen. Teilen.</p></div>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
       <button type="button" class="scan-start-button" data-action="start"><span class="scanner-art" aria-hidden="true"><img class="scanner-base" src="scanner-comic.webp" width="640" height="480" alt=""><img class="scanner-lid" src="scanner-comic.webp" width="640" height="480" alt=""></span><span>Neuer Scan</span></button>
     </section>`;
@@ -108,8 +108,8 @@
     return `<section class="settings-page"><h1 tabindex="-1">Einstellungen</h1>
       <h2 class="section-label">Speichern</h2><div class="group"><div class="setting-row folder-picker"><label for="folder-setting">Speicherort</label><select id="folder-setting"><option value="" disabled ${!settings.folder ? 'selected' : ''}>Auswählen</option>${['Auf meinem iPhone / Scans','iCloud Drive / Scans'].map(folder => `<option value="${folder}" ${settings.folder === folder ? 'selected' : ''}>${folder}</option>`).join('')}</select></div><div class="setting-row folder-picker"><label for="default-format">Standardformat</label><select id="default-format">${formatOptions(settings.format)}</select></div></div>
       <h2 class="section-label">Beim Scannen</h2><div class="group">
-        <div class="setting-row"><div class="setting-copy"><strong id="auto-label">Automatisch weiterscannen</strong><small id="auto-hint">Die nächste Seite wird ohne Nachfrage gescannt.</small></div><label class="toggle"><input type="checkbox" id="auto-setting" aria-labelledby="auto-label" aria-describedby="auto-hint" ${settings.auto ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
-        <div class="setting-row"><div class="setting-copy"><strong id="sound-label">Akustische Hinweise</strong><small id="sound-hint">Die App sagt dir, wie du das Dokument halten sollst.</small></div><label class="toggle"><input type="checkbox" id="sound-setting" aria-labelledby="sound-label" aria-describedby="sound-hint" ${settings.sound ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
+        <label class="setting-row setting-toggle"><input type="checkbox" role="switch" id="auto-setting" aria-label="Automatisch weiterscannen. Die nächste Seite wird ohne Nachfrage gescannt." ${settings.auto ? 'checked' : ''}><span class="setting-copy" aria-hidden="true"><strong>Automatisch weiterscannen</strong><small>Die nächste Seite wird ohne Nachfrage gescannt.</small></span><span class="toggle" aria-hidden="true"><span></span></span></label>
+        <label class="setting-row setting-toggle"><input type="checkbox" role="switch" id="sound-setting" aria-label="Akustische Hinweise. Die App sagt dir, wie du das Dokument halten sollst." ${settings.sound ? 'checked' : ''}><span class="setting-copy" aria-hidden="true"><strong>Akustische Hinweise</strong><small>Die App sagt dir, wie du das Dokument halten sollst.</small></span><span class="toggle" aria-hidden="true"><span></span></span></label>
       </div>
       <h2 class="section-label">Informationen</h2><div class="group">
         <button class="setting-row row-button" data-action="guide"><span>Anleitung</span><span class="chevron" aria-hidden="true">›</span></button>
@@ -388,7 +388,7 @@
     support() { state.view = 'support'; render(); },
     imprint() { state.view = 'imprint'; render(); },
     privacy() { state.view = 'privacy'; render(); },
-    'back-info'() { state.view = 'settings'; render(); },
+    'back-info'() { const previous = state.view; state.view = 'settings'; render(false); main.querySelector(`[data-action="${previous}"]`)?.focus(); },
     async 'copy-address'() {
       try { await navigator.clipboard.writeText('brg.entwicklung@gmail.com'); $('contact-status').textContent = 'Supportadresse kopiert.'; }
       catch { $('contact-status').textContent = 'Supportadresse: brg.entwicklung@gmail.com'; }
