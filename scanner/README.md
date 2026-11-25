@@ -1,36 +1,25 @@
 # Dokumaro – Klickdummy
 
-Interaktiver, eigenständiger Web-Prototyp nach den Projektquellen 00–12, Version 1.0 vom 24.11.2026. Produktname **Dokumaro**; Claim **„Einfach digital. Für alle.“**; App-Store-Name **„Dokumaro – Dokumentenscanner“**; Untertitel **„Scannen. Lesen. Teilen.“**. Markenwerte: Einfachheit, Barrierefreiheit und Selbstständigkeit. Die Festlegung stammt aus der vom Nutzer referenzierten Namensentscheidung im anderen Chat.
+Aktueller Web-Prototyp gemäß Projektquellen 01–13, Stand 25.11.2026. Öffentlich erreichbar unter https://4k5mm85mj2-ship-it.github.io/app-prototypen/scanner/ . Keine Installation, externen Bibliotheken oder kostenpflichtigen Builds erforderlich.
 
-Überarbeitung vom 24.11.2026 nach Nutzerentscheidung: iOS-nahe Navigation und Einstellungen; illustrierte Scanner-Schaltfläche; Dokument im Mittelpunkt mit fester unterer Leiste **Speichern · Teilen · Verwerfen**. Die Ordnerauswahl erfolgt ausschließlich in den Einstellungen. Diese Entscheidung ersetzt für den Klickdummy die bisherige Ordnerauswahl beim Speichern aus F06.
+## Aktueller Ablauf
 
-Überarbeitung 3: Das Dateinamenfeld sitzt jetzt direkt über den drei unteren Aktionen. Die Suche öffnet sich über die Lupe in der Navigation. Startseite und Dokumentansicht enthalten nur die nötigen Elemente. Die Gestaltung orientiert sich an den aktuellen App-Oberflächen: Systemhintergrund und Navigation wie in Barborant/Mitgemischt; Haupt-, Neben- und Verwerfen-Aktion mit der Farbgebung und den 20-Punkt-Rundungen des Mitgemischt-Standards. Die Scanner-Illustration bleibt erhalten und ist blau abgestimmt.
+Start mit Dokumaro, „Einfach digital. Für alle.“, „Scannen. Lesen. Teilen.“ und eigenem Comic-Scanner. Heller bzw. sehr dunkler Schaltflächenhintergrund entsprechend Systemdarstellung. Kurze Deckelanimation vor der Kameraansicht; ohne Animation bei Reduce Motion. Das unveränderte abgenommene App-Icon aus Quelle 13 ist als Browser- und Homescreen-Icon eingebunden; die transparente Schaltflächenillustration bleibt ein eigenes Motiv.
 
-Überarbeitung 4: Auf ausdrücklichen Nutzerwunsch enthält die Anwenderoberfläche keine Präsentations-, Test- oder Simulationshinweise mehr. Dies betrifft auch Browser-Titel, Fußzeile, Kamera, Hilfe, Einstellungen, Dialoge und Ansagen. Die technischen Grenzen dieser Dokumentation gelten weiterhin; es wurde kein echter Kamera-, OCR- oder PDF-Export ergänzt. Testoptionen werden nicht mehr als Produkteinstellungen angezeigt. Nach den Export-Dialogen erscheinen keine Behauptungen über tatsächlich geschriebene oder übertragene Dateien.
+Neuer Scan → Dokument ausrichten → nach Aufnahme Weiter scannen oder Fertig. Automatisch weiterscannen ist standardmäßig aus; vorhandene Einstellungen bleiben erhalten. Im automatischen Modus wird vor der nächsten Aufnahme ein Seitenwechsel bestätigt.
 
-## Öffnen
+In der Dokumentansicht steht die Dateinamenszeile unmittelbar unter den Navigationsaktionen, vor dem OCR-Text und dauerhaft erreichbar. Die Überschrift der ersten Beispielseite liefert den kurzen Titelvorschlag. Bei unsicherem/fehlendem Titel wird ein neutraler Datum-/Uhrzeitname verwendet. Antippen öffnet die Bearbeitung mit fokussiertem und vollständig markiertem Text, Löschen, Fertig und Abbrechen. Änderungen werden erst mit Fertig bestätigt; Abbrechen erhält den Namen. Beide Wege erhalten den Dokumentinhalt und führen den Fokus zur Dateinamenszeile zurück, ohne den Text neu aufzubauen. PDF-Endungen werden aus der Bearbeitung entfernt und beim Export genau einmal ergänzt. Leere oder ungültige Namen werden verständlich abgewiesen.
 
-GitHub Pages: https://4k5mm85mj2-ship-it.github.io/app-prototypen/scanner/
+Unten bleiben Speichern, Teilen und Verwerfen. Die Lupe öffnet die Suche. Speichern nutzt den konfigurierten Beispielordner; fehlt er, wird gemäß aktueller F06 eine Ordnerauswahl angeboten. Keine stille Überschreibung. „Speichern erfolgreich“ und Fertig schließen den Ablauf ab; beim Verwerfen erscheint keine Zusatzmeldung. Teilen verwendet den bestätigten Namen und kehrt zur Dokumentansicht zurück.
 
-`index.html` funktioniert auch direkt im Browser. Es sind keine Installation, externen Bibliotheken, API-Schlüssel oder kostenpflichtigen Builds erforderlich. Die bestehenden Prototypen werden nicht verändert.
+Einstellungen: Speicherort als natives HTML-select, kurze Schaltertexte, Hilfe und Kontakt, Unterstützen, Impressum und Datenschutz. Bestehende BRG-Kontaktdaten; keine erfundene Telefonnummer. Die Unterstützungsbeträge sind als nicht verfügbar dargestellt; keine Zahlungen.
 
-## Durchspielen
+## Technische Grenzen und Daten
 
-1. Einmalig in **Einstellungen → Speicherordner** einen Beispielordner konfigurieren. Danach **Neuer Scan** und **Dokument ausrichten** wählen. Die letztgenannte Schaltfläche löst im Web-Prototyp den bestehenden Aufnahmeadapter aus; sie ist kein Nachweis realer Kamerafunktion.
-2. Standardmodus: Nach jeder Aufnahme **Weiter scannen** oder **Fertig** wählen. Alternativ in den Einstellungen **Automatisch weiterscannen** einschalten: Nach der Aufnahme **Nächste Seite auflegen** und die gute Ausrichtung simulieren. **Fertig** ist nach mindestens einer Seite verfügbar.
-3. Ein bis mehrere Beispieldokumente lesen. Die Lupe öffnet die Suche; **Nächster Treffer** und **Vorheriger Treffer** setzen den Tastatur-/Screenreader-Fokus auf den Treffer. Erneutes Antippen der Lupe schließt und leert die Suche. Der Dateiname wird im festen unteren Bereich eingegeben. Die zweite Seite demonstriert unsichere OCR.
-4. Am unteren Rand **Speichern**, **Teilen** oder **Verwerfen** wählen. **Speichern** verwendet den konfigurierten Beispielordner; **Fertig** beendet den Ablauf und öffnet den Start. Gleiche Namen werden nicht überschrieben. Ohne Ordner erscheint ein Hinweis, keine Ordnerauswahl. Über das Einstellungssymbol kann die Konfiguration geändert werden; **Zurück** erhält das aktuelle Dokument einschließlich Namen und Suchbegriff.
-5. **Teilen** zeigt eine Simulation des Teilmenüs und kehrt zum erhaltenen Dokument zurück.
-6. Die zweite Seite enthält weiterhin den fachlichen Hinweis auf unsichere Texterkennung. Nicht zur App gehörende Fehler-Testschalter und die Testschaltfläche zur Kameraberechtigung sind aus der Oberfläche entfernt.
+Kamera, OCR, Seitenwechsel, Dateien-Ordner, PDF und iOS-Teilmenü bleiben Simulationen mit synthetischen Dokumenten. Es werden keine PDFs erzeugt und keine Kamera- oder Dateiberechtigungen angefordert. HTML-Dialoge zeigen den vorgesehenen Ablauf der späteren nativen iOS-App. Keine Aufnahme allein durch Zeitablauf. Es gibt keine externe OCR, KI, APIs oder Telemetrie.
 
-## Grenzen und Daten
+Nur Einstellungen werden bei Verfügbarkeit in localStorage gespeichert. Dokumente und Namen bleiben im Arbeitsspeicher. Der Hostinganbieter verarbeitet technisch notwendige Verbindungsdaten. Reale VoiceOver-/Diktat-Abnahme auf iPhone/iPad sowie native Kamera-, OCR- und PDF-Prüfungen bleiben offen. Browserprüfungen ersetzen diese nicht.
 
-Kamera, Seitenwechsel, OCR, Dateien-Ordner, PDF-Schreiben und iOS-Teilmenü sind **Simulationen**. Es werden keine Kamera- oder Dateiberechtigungen angefordert und keine PDFs erstellt oder übertragen. Die HTML-Dialoge stellen die geplanten nativen iOS-Dialoge dar. Keine Zeitsteuerung löst Aufnahmen aus. Die Simulation blockiert weitere Aufnahmen, bis ein Seitenwechsel bestätigt oder „Weiter scannen“ gewählt wurde; echte kamerabasierte Dublettenerkennung ist damit nicht nachgewiesen.
+## Gezielte Prüfung am 25.11.2026
 
-Nur Einstellungen (zwei Schalter, beispielhafter Ordner) werden in `localStorage` gespeichert, sofern verfügbar. Die synthetischen Seiten und Dateinamen bleiben im Arbeitsspeicher und werden bei Abbruch/Abschluss verworfen. Die Liste simulierter Exporte enthält nur Namen und bleibt bis zum Neuladen im Arbeitsspeicher, um Kollisionen abzubilden. Keine externen Ressourcen, Trackingdienste oder Netzwerkaufrufe aus dem Anwendungscode. Der Hostinganbieter verarbeitet beim Seitenabruf Verbindungsdaten.
-
-Semantisches HTML, beschriftete Bedienelemente, Suchtrefferfokus, native HTML-Dialoge, Hell-/Dunkelmodus und anpassungsfähiges Layout sind umgesetzt. Reale VoiceOver-Abnahme auf iPhone/iPad bleibt erforderlich. Dieser Prototyp ist kein Nachweis für Kameraqualität, native iOS-Zugänglichkeit, OCR-Qualität, PDF-Textebene, PDF/UA oder technische Machbarkeit der späteren App.
-
-Einstellungsüberarbeitung: Speicherort als direktes HTML-select mit nativer Browser-/iOS-Auswahl; kurze Schaltertexte. Hilfe und Kontakt, Scanner-App unterstützen und Impressum als eigene Navigationsziele nach aktuellen Mitgemischt-Quellen. E-Mail und Postflex-Anschrift aus SupportContact/ImprintContact übernommen. Keine Telefonnummer erfunden. Unterstützungsseite nutzt den vorhandenen Nichtverfügbarkeitszustand; keine StoreKit-Verbindung, erfundenen Preise oder Zahlungen. Datenschutz bleibt separat erreichbar.
-
-Scanner-Illustration: eigens mit dem integrierten Bildgenerator erstellt. Asset `scanner-comic.webp`, transparenter Hintergrund; 640 Pixel breite, optimierte Web-Fassung. Motiv: klar erkennbarer Comic-Flachbettscanner mit offenem Deckel, Papier auf dem Glas und türkisfarbenem Scanlicht; blaue Palette, kräftige Konturen, keine Beschriftung, kein heller Hintergrund. Die frühere SVG-Datei wird nicht mehr angezeigt.
+Browsergeprüft: Überschrift als Vorschlag; Dateiname vor Dokumentinhalt in der Accessibility-Reihenfolge; direkter Textfeldfokus und vollständige Markierung; Abbrechen ohne Namensänderung; Löschen und Leernamenprüfung; mehrfach eingegebene PDF-Endungen normalisiert; bestätigter Name im Teilen-Dialog; Fokus zurück zur Namenszeile. JavaScript-Syntaxprüfung erfolgreich. Keine TestFlight- oder native VoiceOver-Abnahme behauptet.

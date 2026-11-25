@@ -17,7 +17,7 @@
     folder: '<path d="M3 6h7l2 3h9v11H3z"/>',
     save: '<path d="M12 3v11m-4-4 4 4 4-4M4 14v7h16v-7"/>',
     trash: '<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/>',
-    pencil: '<path d="m15 5 4 4M4 20l4-1L20 7l-4-4L4 15z"/>',
+    edit: '<path d="m15 4 5 5-11 11-6 1 1-6zM13 6l5 5"/>',
     plus: '<path d="M12 5v14M5 12h14"/>'
   };
   const icon = (name, size = 24) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${icons[name] || icons.document}</svg>`;
@@ -71,12 +71,13 @@
       : isDocument
         ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button></div>`
         : `<button class="nav-button" data-action="${state.view === 'settings' ? 'back-settings' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? '' : 'Neuer Scan'}</span>`;
+    if (isDocument) $('navigation').insertAdjacentHTML('beforeend', filenameRow());
     main.innerHTML = state.view === 'home' ? homeView() : state.view === 'settings' ? settingsView() : state.view === 'camera' ? cameraView() : isInfo ? informationView() : documentView();
     $('document-actions').innerHTML = isDocument ? documentDock() : '';
     dockObserver.disconnect();
     if (isDocument) dockObserver.observe(main.ownerDocument.querySelector('.document-dock'));
     updateDockHeight();
-    if (focus) { if (isDocument) $('filename').focus({preventScroll:true}); else focusTitle(); }
+    if (focus) focusTitle();
   }
   function homeView() {
     return `<section class="home">
@@ -138,18 +139,44 @@
   }
   function documentView() {
     return `<section class="document-screen"><h1 class="sr-only" tabindex="-1">Dein Dokument, ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</h1>
-      <button type="button" id="filename" class="filename-row" data-action="rename" aria-label="Dateiname, ${esc(state.filename)}" aria-describedby="filename-hint"><span><small>Dateiname</small><strong>${esc(state.filename)}</strong></span>${icon('pencil',22)}</button><span class="sr-only" id="filename-hint">Zum Ändern aktivieren.</span>
       <div class="document-search" id="search-panel" ${state.searchOpen ? '' : 'hidden'}><label class="sr-only" for="search">Dokument durchsuchen</label><div class="search-box">${icon('search', 20)}<input class="text-input" type="search" id="search" placeholder="Dokument durchsuchen" value="${esc(state.search)}" autocomplete="off" aria-describedby="search-status"></div>
       <div class="search-nav"><span id="search-status" role="status" aria-atomic="true">Suchbegriff eingeben</span><button class="secondary" id="previous-match" data-action="previous-match" disabled>Vorheriger Treffer</button><button class="secondary" id="next-match" data-action="next-match" disabled>Nächster Treffer</button></div></div>
       <div class="document-pages" id="document-pages">${pageMarkup()}</div>
     </section>`;
   }
   function documentDock() {
-    const normalized = normalizedName(state.filename);
     return `<section class="document-dock" aria-label="Dokumentaktionen">
-      <p id="filename-error" class="error-message" role="alert"></p><p id="export-error" class="error-message" role="alert"></p>
+      <p id="export-error" class="error-message" role="alert"></p>
       <div class="document-toolbar" role="group" aria-label="Dokumentaktionen">${button('save', 'Speichern', 'toolbar-action primary', 'save')}${button('share', 'Teilen', 'toolbar-action secondary', 'share')}${button('abort', 'Verwerfen', 'toolbar-action destructive', 'trash')}</div>
     </section>`;
+  }
+  function filenameRow() {
+    return `<button type="button" id="filename-row" class="filename-row" data-action="rename" aria-label="Dateiname: ${esc(state.filename)}" aria-describedby="filename-edit-hint"><span>Dateiname</span><strong id="filename-value">${esc(state.filename)}</strong>${icon('edit', 21)}</button><span id="filename-edit-hint" class="sr-only">Zum Bearbeiten aktivieren.</span>`;
+  }
+  function editFilename() {
+    openDialog('Dateiname', `<label class="sr-only" for="filename">Dateiname</label><div class="filename-editor"><input class="text-input" id="filename" type="text" autocomplete="off" spellcheck="false" value="${esc(state.filename)}" aria-describedby="filename-error"><button class="nav-button" type="button" data-action="clear-name" aria-label="Dateiname löschen">Löschen</button></div><p id="filename-error" class="error-message" role="alert"></p>`, button('confirm-name', 'Fertig') + button('close-dialog', 'Abbrechen', 'secondary'));
+    returnFocus = $('filename-row');
+    $('filename').focus();
+    $('filename').select();
+  }
+  function confirmFilename() {
+    const result = normalizedName($('filename').value);
+    if (result.error) {
+      $('filename-error').textContent = result.error;
+      $('filename').setAttribute('aria-invalid', 'true');
+      $('filename').focus();
+      return;
+    }
+    state.filename = result.base;
+    $('filename-value').textContent = state.filename;
+    $('filename-row').setAttribute('aria-label', 'Dateiname: ' + state.filename);
+    closeDialog();
+  }
+  function suggestedFilename() {
+    const title = !state.ocrMissing && state.pages[0]?.title;
+    if (title && !state.pages[0].uncertain && title.length <= 80 && normalizedName(title).base) return normalizedName(title).base;
+    const date = new Intl.DateTimeFormat('de-DE', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()).replace(',', '').replace(':', '-');
+    return 'Scan ' + date;
   }
   function pageMarkup() {
     return state.pages.map((page, index) => `<article class="document-page" aria-labelledby="page-title-${index}"><span class="page-number">Seite ${index + 1} von ${state.pages.length}</span>
@@ -251,19 +278,13 @@
     if (!state.pages.length) return;
     closeDialog(false);
     state.view = 'document';
-    const now = new Date();
-    const date = new Intl.DateTimeFormat('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}).format(now);
-    const time = new Intl.DateTimeFormat('de-DE', {hour:'2-digit',minute:'2-digit'}).format(now).replace(':','-');
-    const title = state.ocrMissing ? '' : (state.pages[0]?.title || '');
-    state.filename ||= title && !normalizedName(title).error ? title : `Scan ${date} ${time}`;
+    state.filename ||= suggestedFilename();
     render();
     updateSearch();
   }
   function filenameForExport() {
     const result = normalizedName(state.filename);
-    $('filename-error').textContent = result.error || '';
-    $('filename').setAttribute('aria-invalid', result.error ? 'true' : 'false');
-    if (result.error) { actions.rename(); return null; }
+    if (result.error) { editFilename(); $('filename-error').textContent = result.error; return null; }
     return result.name;
   }
   function chooseFolder() {
@@ -275,7 +296,7 @@
     const name = filenameForExport();
     if (!name) return;
     if (!settings.folder) {
-      $('export-error').textContent = 'Bitte lege in den Einstellungen einen Speicherordner fest. Dein Dokument bleibt erhalten.';
+      openDialog('Speicherort', `<label for="export-folder">Speicherordner</label><select id="export-folder"><option value="Auf meinem iPhone / Scans">Auf meinem iPhone / Scans</option><option value="iCloud Drive / Scans">iCloud Drive / Scans</option></select>`, button('set-export-folder', 'Auswählen') + button('close-dialog', 'Abbrechen', 'secondary'));
       return;
     }
     if (state.saveError) {
@@ -327,24 +348,10 @@
       state.pages = []; state.filename = ''; state.search = ''; state.view = 'home'; render();
     },
     'share-complete'() { closeDialog(); announce('Dokumentansicht.'); },
-    rename() {
-      if (dialog.open) closeDialog(false);
-      const row = $('filename');
-      row.focus({preventScroll:true});
-      openDialog('Dateiname ändern', '<label for="filename-edit">Dateiname</label><div class="filename-edit-row"><input class="text-input" id="filename-edit" type="text" autocomplete="off" value="' + esc(state.filename) + '" aria-describedby="edit-error"><button class="text-link" data-action="clear-name" aria-label="Dateiname löschen">✕</button></div><p id="edit-error" class="error-message" role="alert"></p>', button('confirm-name','Fertig') + button('close-dialog','Abbrechen','secondary'));
-      $('filename-edit').focus({preventScroll:true}); $('filename-edit').select();
-    },
-    'clear-name'() { $('filename-edit').value = ''; $('filename-edit').focus(); $('edit-error').textContent = ''; },
-    'confirm-name'() {
-      const result = normalizedName($('filename-edit').value);
-      if (result.error) { $('edit-error').textContent = result.error; $('filename-edit').focus(); return; }
-      state.filename = result.base;
-      const row = $('filename');
-      row.querySelector('strong').textContent = result.base;
-      row.setAttribute('aria-label', 'Dateiname, ' + result.base);
-      $('filename-error').textContent = '';
-      closeDialog();
-    },
+    rename() { editFilename(); },
+    'confirm-name'() { confirmFilename(); },
+    'clear-name'() { $('filename').value = ''; $('filename').focus(); },
+    'set-export-folder'() { settings.folder = $('export-folder').value; persistSettings(); closeDialog(false); save(); },
     'unique-name'() {
       const original = normalizedName(state.filename).base;
       let number = 2;
@@ -380,7 +387,10 @@
     actions[target.dataset.action]?.();
   });
   document.addEventListener('input', event => {
-    if (event.target.id === 'filename-edit') $('edit-error').textContent = '';
+    if (event.target.id === 'filename') {
+      $('filename-error').textContent = '';
+      event.target.removeAttribute('aria-invalid');
+    }
     if (event.target.id === 'search') { state.search = event.target.value; updateSearch(); }
   });
   document.addEventListener('change', event => {
