@@ -42,7 +42,7 @@
   ];
   const formats = { pdf: { label: 'PDF', detail: 'Seitenbild mit lesbarem Text' }, docx: { label: 'Word', detail: 'Bearbeitbares Word-Dokument' }, rtf: { label: 'Rich Text', detail: 'Formatierter Text' }, txt: { label: 'Text', detail: 'Einfacher Text' } };
   const formatOptions = selected => Object.entries(formats).map(([key, value]) => `<option value="${key}" ${selected === key ? 'selected' : ''}>${value.label} (.${key})</option>`).join('');
-  let settings = { auto: false, sound: true, folder: '', format: 'pdf' };
+  let settings = { auto: false, sound: true, folder: '', format: 'pdf', language: window.DokumaroI18n.language };
   try {
     const saved = JSON.parse(localStorage.getItem('scanner-prototype-settings') || '{}');
     if (Object.hasOwn(formats, saved.format)) settings.format = saved.format;
@@ -56,7 +56,7 @@
   function persistSettings() {
     try { localStorage.setItem('scanner-prototype-settings', JSON.stringify(settings)); } catch { /* Use in-memory settings. */ }
   }
-  function announce(text) { $('announcer').textContent = text; }
+  function announce(text) { $('announcer').textContent = window.DokumaroI18n.translate(text); }
   function button(action, label, style = 'primary', symbol = '') {
     return `<button type="button" class="${style}" data-action="${action}">${symbol ? icon(symbol, 21) : ''}${label}</button>`;
   }
@@ -75,7 +75,7 @@
       ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title" aria-hidden="true">Dokumaro</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
       : isInfo ? `<button class="nav-button" data-action="back-info">${icon('back',20)}Zurück</button>`
       : isDocument
-        ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button></div>`
+        ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings',23)}</button></div>`
         : `<button class="nav-button" data-action="${state.view === 'settings' ? 'back-settings' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? '' : 'Neuer Scan'}</span>`;
     if (isDocument) $('navigation').insertAdjacentHTML('beforeend', filenameRow() + `<div class="format-row"><label for="document-format">Dateiformat</label><select id="document-format">${formatOptions(state.format)}</select></div>`);
     main.innerHTML = state.view === 'home' ? homeView() : state.view === 'settings' ? settingsView() : state.view === 'camera' ? cameraView() : isInfo ? informationView() : documentView();
@@ -83,11 +83,12 @@
     dockObserver.disconnect();
     if (isDocument) dockObserver.observe(main.ownerDocument.querySelector('.document-dock'));
     updateDockHeight();
+    window.DokumaroI18n.apply();
     if (focus) focusTitle();
   }
   function homeView() {
     return `<section class="home">
-      <div class="home-copy" role="group" tabindex="0" aria-label="Einfach digital. Für alle. Scannen. Lesen. Teilen."><h1 aria-hidden="true">Einfach digital.<br>Für alle.</h1><p class="intro" aria-hidden="true">Scannen. Lesen. Teilen.</p></div>
+      <div class="home-copy" aria-hidden="true"><h1 aria-hidden="true">Einfach digital.<br>Für alle.</h1><p class="intro" aria-hidden="true">Scannen. Lesen. Teilen.</p></div>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
       <button type="button" class="scan-start-button" data-action="start"><span class="scanner-art" aria-hidden="true"><img class="scanner-base" src="scanner-comic.webp" width="640" height="480" alt=""><img class="scanner-lid" src="scanner-comic.webp" width="640" height="480" alt=""></span><span>Neuer Scan</span></button>
     </section>`;
@@ -105,11 +106,11 @@
     </section>`;
   }
   function settingsView() {
-    return `<section class="settings-page"><h1 tabindex="-1">Einstellungen</h1>
+    return `<section class="settings-page"><h1 tabindex="-1">Einstellungen</h1><div class="group"><div class="setting-row folder-picker"><label for="language-setting">Language</label><select id="language-setting"><option value="de">Deutsch</option><option value="en">English</option><option value="fr">Français</option></select></div></div>
       <h2 class="section-label">Speichern</h2><div class="group"><div class="setting-row folder-picker"><label for="folder-setting">Speicherort</label><select id="folder-setting"><option value="" disabled ${!settings.folder ? 'selected' : ''}>Auswählen</option>${['Auf meinem iPhone / Scans','iCloud Drive / Scans'].map(folder => `<option value="${folder}" ${settings.folder === folder ? 'selected' : ''}>${folder}</option>`).join('')}</select></div><div class="setting-row folder-picker"><label for="default-format">Standardformat</label><select id="default-format">${formatOptions(settings.format)}</select></div></div>
       <h2 class="section-label">Beim Scannen</h2><div class="group">
         <label class="setting-row setting-toggle"><input type="checkbox" role="switch" id="auto-setting" aria-label="Automatisch weiterscannen. Die nächste Seite wird ohne Nachfrage gescannt." ${settings.auto ? 'checked' : ''}><span class="setting-copy" aria-hidden="true"><strong>Automatisch weiterscannen</strong><small>Die nächste Seite wird ohne Nachfrage gescannt.</small></span><span class="toggle" aria-hidden="true"><span></span></span></label>
-        <label class="setting-row setting-toggle"><input type="checkbox" role="switch" id="sound-setting" aria-label="Akustische Hinweise. Die App sagt dir, wie du das Dokument halten sollst." ${settings.sound ? 'checked' : ''}><span class="setting-copy" aria-hidden="true"><strong>Akustische Hinweise</strong><small>Die App sagt dir, wie du das Dokument halten sollst.</small></span><span class="toggle" aria-hidden="true"><span></span></span></label>
+        <label class="setting-row setting-toggle"><input type="checkbox" role="switch" id="sound-setting" aria-label="Akustische Hinweise. Die App sagt dir, wie du die Kamera halten sollst." ${settings.sound ? 'checked' : ''}><span class="setting-copy" aria-hidden="true"><strong>Akustische Hinweise</strong><small>Die App sagt dir, wie du die Kamera halten sollst.</small></span><span class="toggle" aria-hidden="true"><span></span></span></label>
       </div>
       <h2 class="section-label">Informationen</h2><div class="group">
         <button class="setting-row row-button" data-action="guide"><span>Anleitung</span><span class="chevron" aria-hidden="true">›</span></button>
@@ -121,7 +122,7 @@
     </section>`;
   }
   function mailLink(label, subject) {
-    const href = 'mailto:brg.entwicklung@gmail.com?subject=' + encodeURIComponent('Dokumaro – ' + subject);
+    const href = 'mailto:brg.entwicklung@gmail.com?subject=' + encodeURIComponent('Dokumaro – ' + window.DokumaroI18n.translate(subject));
     return `<a class="setting-row row-button mail-link" href="${esc(href)}"><span>${label}</span><span class="chevron" aria-hidden="true">›</span></a>`;
   }
   function informationView() {
@@ -179,8 +180,8 @@
   function suggestedFilename() {
     const title = !state.ocrMissing && state.pages[0]?.title;
     if (title && !state.pages[0].uncertain && title.length <= 80 && normalizedName(title).base) return normalizedName(title).base;
-    const date = new Intl.DateTimeFormat('de-DE', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()).replace(',', '').replace(':', '-');
-    return 'Scan ' + date;
+    const date = new Intl.DateTimeFormat(settings.language, {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()).replace(',', '').replace(':', '-');
+    return (settings.language === 'fr' ? 'Numérisation ' : 'Scan ') + date;
   }
   function pageMarkup() {
     return state.pages.map((page, index) => `<article class="document-page" aria-labelledby="page-title-${index}"><span class="page-number">Seite ${index + 1} von ${state.pages.length}</span>
@@ -222,15 +223,17 @@
     matches.forEach((m, i) => m.classList.toggle('current', i === state.match));
     const target = matches[state.match];
     const page = [...main.querySelectorAll('.document-page')].indexOf(target.closest('.document-page')) + 1;
-    target.setAttribute('aria-label', `Treffer ${state.match + 1} von ${matches.length}, Seite ${page}: ${target.textContent}`);
+    target.setAttribute('aria-label', window.DokumaroI18n.translate(`Treffer ${state.match + 1} von ${matches.length}, Seite ${page}: ${target.textContent}`));
     target.focus();
     target.scrollIntoView({ block: 'center', behavior: 'instant' });
     $('search-status').textContent = `Treffer ${state.match + 1} von ${matches.length} · Seite ${page}`;
+    window.DokumaroI18n.apply();
   }
   function openDialog(title, content, actions) {
     if (!dialog.contains(document.activeElement)) returnFocus = document.activeElement;
     $('dialog-content').innerHTML = `<h2 id="dialog-title" tabindex="-1">${title}</h2>${content}<div class="actions">${actions}</div>`;
     if (!dialog.open) dialog.showModal();
+    window.DokumaroI18n.apply();
     $('dialog-title').focus();
   }
   function closeDialog(restore = true) {
@@ -413,6 +416,7 @@
   });
   document.addEventListener('change', event => {
     const {id, checked} = event.target;
+    if (id === 'language-setting') { settings.language = event.target.value; persistSettings(); window.DokumaroI18n.language = settings.language; $('language-setting').focus(); }
     if (id === 'document-format' && Object.hasOwn(formats, event.target.value)) { state.format = event.target.value; }
     if (id === 'default-format' && Object.hasOwn(formats, event.target.value)) { settings.format = event.target.value; persistSettings(); }
     if (id === 'folder-setting') { settings.folder = event.target.value; persistSettings(); }
@@ -439,3 +443,4 @@
   const dockObserver = new ResizeObserver(updateDockHeight);
   render();
 })();
+
