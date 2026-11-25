@@ -146,3 +146,41 @@ li{margin:8px 0}
 .filename-editor{display:flex;align-items:center;gap:10px}
 .filename-editor input{flex:1;min-width:0}
 @media(max-width:400px){.filename-row{flex-wrap:wrap;gap:4px 10px}.filename-row>span{width:100%}}
+
+.format-row{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;min-height:46px}
+.format-row label{font-size:.85rem;color:var(--muted)}
+.format-row select{width:auto;max-width:70%;min-height:44px;border:0;background:transparent;text-align:right;color:var(--ink);font-size:.94rem}
+.guide-illustration{max-width:260px;margin:0 auto 24px;color:var(--accent)}
+.guide-illustration svg{width:100%;height:auto}
+.support-choice strong{white-space:nowrap;color:var(--accent)}
+.camera-active{background:#17232b;color:#fff}
+.camera-active .app-shell{max-width:none;min-height:100svh}
+.camera-active .navigation{position:fixed;inset:0 0 auto;z-index:6;min-height:64px;padding:calc(8px + env(safe-area-inset-top)) 20px 8px;background:linear-gradient(#000b,#0000);pointer-events:none}
+.camera-active .navigation button{pointer-events:auto;color:#fff;text-shadow:0 1px 3px #000}
+.camera-active .nav-title{display:none}
+.camera-active main{padding:0;min-height:100svh}
+.camera-screen{position:relative;width:100%;max-width:none;height:100svh;min-height:520px;overflow:hidden}
+.camera-active .camera-preview{position:absolute;inset:0;height:100%;max-height:none;min-height:0;margin:0;border-radius:0;background:radial-gradient(ellipse at 50% 40%,#5b6568,#283336 75%)}
+.camera-active .camera-grid{inset:18% 15% 26%;border-color:#ffffff18}
+.camera-active .demo-paper{width:min(52vw,310px);height:auto;aspect-ratio:155/210;padding:32px 24px;transform:rotate(-7deg) skewY(-2deg);transition:transform .35s ease}
+.camera-active .demo-paper p{font-size:clamp(11px,2vw,20px)}
+.camera-active .demo-paper::before,.camera-active .demo-paper::after{display:none}
+.document-frame{position:absolute;width:min(75vw,440px);height:min(65svh,590px);left:50%;top:45%;transform:translate(-50%,-50%);overflow:visible;filter:drop-shadow(0 1px 2px #000)}
+.document-frame polygon{fill:none;stroke:#fff;stroke-width:4;vector-effect:non-scaling-stroke;stroke-linejoin:round;transition:all .35s ease}
+.camera-stage-1 .document-frame polygon{transform:rotate(2deg);transform-origin:center}
+.camera-stage-2 .document-frame polygon{stroke:#a9f0cf;stroke-dasharray:none;transform:scale(.96);transform-origin:center}
+.camera-stage-2 .demo-paper{transform:rotate(0)}
+.camera-count{position:absolute;top:calc(20px + env(safe-area-inset-top));right:24px;color:#fff;background:#0009;padding:6px 12px;border-radius:20px;z-index:7;font-size:.9rem}
+.camera-overlay{position:absolute;bottom:0;left:0;right:0;z-index:5;padding:48px max(20px,env(safe-area-inset-left)) calc(20px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000d 40%)}
+.camera-overlay .guidance{max-width:760px;margin:0 auto 16px;padding:12px 16px;background:#101820e6;border-radius:14px;color:#fff;min-height:56px;align-items:center}
+.camera-overlay .guidance-icon,.camera-overlay .guidance p{color:#fff}
+.camera-actions{display:flex;gap:12px;max-width:760px;margin:auto;align-items:stretch}
+.camera-actions button{flex:1;min-width:0;font-size:.94rem}
+@media(max-height:500px) and (orientation:landscape){.camera-screen{min-height:100svh}.camera-overlay{padding-top:12px}.camera-overlay .guidance{margin-bottom:8px;padding:6px 12px}.camera-actions button{min-height:44px;padding:8px}.camera-active .demo-paper{height:65svh;width:auto}.document-frame{height:75svh;width:40vw}.camera-overlay{left:40%;padding-inline:16px}}
+
+.camera-active .document-frame{width:min(52vw,310px);height:auto;aspect-ratio:155/210;top:50%;transform:translate(-50%,-50%) rotate(-7deg) skewY(-2deg)}
+.camera-stage-1 .demo-paper{transform:rotate(-3deg)}
+.camera-stage-1 .document-frame{transform:translate(-50%,-50%) rotate(-3deg)}
+.camera-stage-2 .document-frame{transform:translate(-50%,-50%)}
+.camera-stage-1 .document-frame polygon,.camera-stage-2 .document-frame polygon{transform:none}
+@media(max-height:500px) and (orientation:landscape){.camera-active .document-frame{height:65svh;width:auto}}

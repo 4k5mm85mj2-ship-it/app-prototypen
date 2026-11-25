@@ -40,14 +40,17 @@
       'Wir freuen uns auf einen gemeinsamen Tag mit guten Gesprächen und neuen Ideen.'
     ] }
   ];
-  let settings = { auto: false, sound: true, folder: '' };
+  const formats = { pdf: { label: 'PDF', detail: 'Seitenbild mit lesbarem Text' }, docx: { label: 'Word', detail: 'Bearbeitbares Word-Dokument' }, rtf: { label: 'Rich Text', detail: 'Formatierter Text' }, txt: { label: 'Text', detail: 'Einfacher Text' } };
+  const formatOptions = selected => Object.entries(formats).map(([key, value]) => `<option value="${key}" ${selected === key ? 'selected' : ''}>${value.label} (.${key})</option>`).join('');
+  let settings = { auto: false, sound: true, folder: '', format: 'pdf' };
   try {
     const saved = JSON.parse(localStorage.getItem('scanner-prototype-settings') || '{}');
+    if (Object.hasOwn(formats, saved.format)) settings.format = saved.format;
     settings.auto = saved.auto === true;
     settings.sound = saved.sound !== false;
     if (['Auf meinem iPhone / Scans', 'iCloud Drive / Scans'].includes(saved.folder)) settings.folder = saved.folder;
   } catch { /* Settings are optional; the prototype also works without localStorage. */ }
-  const state = { view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', searchOpen: false, match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '' };
+  const state = { view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', searchOpen: false, match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '', format: settings.format, guidance: 0 };
   const exportedNames = new Set();
   let returnFocus = null;
   function persistSettings() {
@@ -57,21 +60,23 @@
   function button(action, label, style = 'primary', symbol = '') {
     return `<button type="button" class="${style}" data-action="${action}">${symbol ? icon(symbol, 21) : ''}${label}</button>`;
   }
-  function focusTitle() { main.querySelector('h1')?.focus(); }
+  function focusTitle() { if (state.view === 'home') main.querySelector('[data-action="start"]')?.focus(); else main.querySelector('h1')?.focus(); }
   function render(focus = true) {
     announce('');
     const atHome = state.view === 'home';
     const isDocument = state.view === 'document';
-    const isInfo = ['help','support','imprint','privacy'].includes(state.view);
+    const isInfo = ['guide','help','support','imprint','privacy'].includes(state.view);
     document.body.classList.toggle('home-active', atHome);
+    document.querySelector('.skip-link').hidden = atHome;
+    document.body.classList.toggle('camera-active', state.view === 'camera');
     document.body.classList.toggle('document-active', isDocument);
     $('navigation').innerHTML = atHome
-      ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokumaro</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
+      ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title" aria-hidden="true">Dokumaro</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
       : isInfo ? `<button class="nav-button" data-action="back-info">${icon('back',20)}Einstellungen</button>`
       : isDocument
         ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button></div>`
         : `<button class="nav-button" data-action="${state.view === 'settings' ? 'back-settings' : 'abort'}">${state.view === 'settings' ? icon('back', 20) + 'Zurück' : 'Abbrechen'}</button><span class="nav-title">${state.view === 'settings' ? '' : 'Neuer Scan'}</span>`;
-    if (isDocument) $('navigation').insertAdjacentHTML('beforeend', filenameRow());
+    if (isDocument) $('navigation').insertAdjacentHTML('beforeend', filenameRow() + `<div class="format-row"><label for="document-format">Dateiformat</label><select id="document-format">${formatOptions(state.format)}</select></div>`);
     main.innerHTML = state.view === 'home' ? homeView() : state.view === 'settings' ? settingsView() : state.view === 'camera' ? cameraView() : isInfo ? informationView() : documentView();
     $('document-actions').innerHTML = isDocument ? documentDock() : '';
     dockObserver.disconnect();
@@ -81,35 +86,33 @@
   }
   function homeView() {
     return `<section class="home">
-      <h1 tabindex="-1">Einfach digital.<br>Für alle.</h1>
-      <p class="intro">Scannen. Lesen. Teilen.</p>
+      <h1 aria-hidden="true">Einfach digital.<br>Für alle.</h1>
+      <p class="intro" aria-hidden="true">Scannen. Lesen. Teilen.</p>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
       <button type="button" class="scan-start-button" data-action="start"><span class="scanner-art" aria-hidden="true"><img class="scanner-base" src="scanner-comic.webp" width="640" height="480" alt=""><img class="scanner-lid" src="scanner-comic.webp" width="640" height="480" alt=""></span><span>Neuer Scan</span></button>
     </section>`;
   }
+  const guidanceSteps = ['Kamera nach rechts bewegen.', 'Kamera parallel zum Dokument halten.', 'Gut. Kamera ruhig halten.'];
   function cameraView() {
     const count = state.pages.length;
     const waiting = state.awaitingChange;
-    return `<section class="camera-screen">
-      <h1 tabindex="-1">Dokument erfassen</h1>
-      <div class="camera-count"><span>${settings.auto ? 'Automatisch weiterscannen' : 'Nach jeder Seite entscheiden'}</span><span class="count-pill">${count} ${count === 1 ? 'Seite' : 'Seiten'}</span></div>
-      <div class="camera-preview" aria-hidden="true"><div class="camera-grid"></div><div class="demo-paper"><p>EINLADUNG<br>ZUM TEAMTAG</p><div class="paper-line"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line short"></div></div></div>
-      <div class="guidance"><span class="guidance-icon">${icon(waiting ? 'check' : 'scan', 26)}</span><div><strong id="camera-guidance">${waiting ? `Seite ${count} erfasst.` : 'Das Dokument etwas nach rechts bewegen.'}</strong><p>${waiting ? 'Lege die nächste Seite auf. Dieselbe unveränderte Seite wird nicht erneut aufgenommen.' : 'Alle Ränder sollen im Bild sein. Bei guter Ausrichtung erfolgt die Aufnahme automatisch.'}</p></div></div>
-      <div class="actions">${count ? button('finish', 'Fertig', 'primary', 'check') : ''}</div>
-      <div class="actions">
-        ${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('capture', 'Dokument ausrichten', 'secondary', 'scan')}
-        ${count && !settings.auto && waiting ? button('continue', 'Weiter scannen', 'secondary') : ''}
-      </div>
+    const hint = waiting ? `Seite ${count} erfasst.` : guidanceSteps[state.guidance];
+    return `<section class="camera-screen"><h1 class="sr-only" tabindex="-1">Dokument erfassen</h1>
+      <div class="camera-preview camera-stage-${state.guidance}" aria-hidden="true"><div class="camera-grid"></div><div class="demo-paper"><p>EINLADUNG<br>ZUM TEAMTAG</p><div class="paper-line"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line short"></div></div><svg class="document-frame" viewBox="0 0 400 600" preserveAspectRatio="none"><polygon points="4,4 396,4 396,596 4,596"/></svg></div>
+      <div class="camera-count"><span>${count} ${count === 1 ? 'Seite' : 'Seiten'}</span></div>
+      <div class="camera-overlay"><div class="guidance"><span class="guidance-icon" aria-hidden="true">${icon(waiting ? 'check' : 'scan', 26)}</span><div><strong id="camera-guidance">${hint}</strong>${waiting ? '<p>Lege die nächste Seite auf.</p>' : ''}</div></div>
+      <div class="camera-actions">${count ? button('finish', 'Fertig', 'primary', 'check') : ''}${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('align', 'Dokument ausrichten', 'secondary', 'scan')}</div></div>
     </section>`;
   }
   function settingsView() {
     return `<section class="settings-page"><h1 tabindex="-1">Einstellungen</h1>
-      <h2 class="section-label">Speichern</h2><div class="group"><div class="setting-row folder-picker"><label for="folder-setting">Speicherort</label><select id="folder-setting"><option value="" disabled ${!settings.folder ? 'selected' : ''}>Auswählen</option>${['Auf meinem iPhone / Scans','iCloud Drive / Scans'].map(folder => `<option value="${folder}" ${settings.folder === folder ? 'selected' : ''}>${folder}</option>`).join('')}</select></div></div>
+      <h2 class="section-label">Speichern</h2><div class="group"><div class="setting-row folder-picker"><label for="folder-setting">Speicherort</label><select id="folder-setting"><option value="" disabled ${!settings.folder ? 'selected' : ''}>Auswählen</option>${['Auf meinem iPhone / Scans','iCloud Drive / Scans'].map(folder => `<option value="${folder}" ${settings.folder === folder ? 'selected' : ''}>${folder}</option>`).join('')}</select></div><div class="setting-row folder-picker"><label for="default-format">Standardformat</label><select id="default-format">${formatOptions(settings.format)}</select></div></div>
       <h2 class="section-label">Beim Scannen</h2><div class="group">
         <div class="setting-row"><div class="setting-copy"><strong id="auto-label">Automatisch weiterscannen</strong><small id="auto-hint">Die nächste Seite wird ohne Nachfrage gescannt.</small></div><label class="toggle"><input type="checkbox" id="auto-setting" aria-labelledby="auto-label" aria-describedby="auto-hint" ${settings.auto ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
         <div class="setting-row"><div class="setting-copy"><strong id="sound-label">Akustische Hinweise</strong><small id="sound-hint">Die App sagt dir, wie du das Dokument halten sollst.</small></div><label class="toggle"><input type="checkbox" id="sound-setting" aria-labelledby="sound-label" aria-describedby="sound-hint" ${settings.sound ? 'checked' : ''}><span aria-hidden="true"></span></label></div>
       </div>
       <h2 class="section-label">Informationen</h2><div class="group">
+        <button class="setting-row row-button" data-action="guide"><span>Anleitung</span><span class="chevron" aria-hidden="true">›</span></button>
         <button class="setting-row row-button" data-action="help"><span>Hilfe und Kontakt</span><span class="chevron" aria-hidden="true">›</span></button>
         <button class="setting-row row-button" data-action="support"><span>Dokumaro unterstützen</span><span class="chevron" aria-hidden="true">›</span></button>
         <button class="setting-row row-button" data-action="imprint"><span>Impressum</span><span class="chevron" aria-hidden="true">›</span></button>
@@ -122,20 +125,21 @@
     return `<a class="setting-row row-button mail-link" href="${esc(href)}"><span>${label}</span><span class="chevron" aria-hidden="true">›</span></a>`;
   }
   function informationView() {
-    const titles = {help:'Hilfe und Kontakt',support:'Dokumaro unterstützen',imprint:'Impressum',privacy:'Datenschutz'};
+    const titles = {guide:'Anleitung',help:'Hilfe und Kontakt',support:'Dokumaro unterstützen',imprint:'Impressum',privacy:'Datenschutz'};
     let content = '';
     if (state.view === 'help') content = `<div class="group information-copy"><h2>Schön, dass du Dokumaro nutzt!</h2><p>Ich entwickle Apps aus Überzeugung: Sie sollen den Alltag einfacher machen, Freude bereiten und für alle Menschen gut bedienbar sein – unabhängig davon, ob sie mit oder ohne Einschränkungen genutzt werden.</p><p>Dabei gilt für mich: Weniger ist mehr. Klare Funktionen, durchdachtes Design und echte Barrierefreiheit stehen im Mittelpunkt.</p><p>Hast du eine Idee, einen Verbesserungsvorschlag oder funktioniert etwas nicht wie erwartet? Dann schreib mir gerne. Deine Rückmeldung hilft mir, Dokumaro weiterzuentwickeln.</p></div><div class="group">${mailLink('Problem melden','Problem melden')}${mailLink('Idee oder Feedback senden','Idee oder Feedback')}<button class="setting-row row-button" data-action="copy-address">Supportadresse kopieren</button></div><p id="contact-status" role="status"></p>`;
-    if (state.view === 'support') content = `<div class="group information-copy"><p>Dokumaro soll für alle zugänglich bleiben. Wenn dir die App gefällt, kannst du ihre Weiterentwicklung freiwillig unterstützen.</p></div><h2 class="section-label">Wähle einen Betrag</h2><div class="group information-copy"><p id="support-status" role="status">Die Unterstützungsbeträge sind gerade nicht verfügbar. Bitte versuche es später erneut.</p>${button('retry-support','Erneut versuchen','secondary')}</div><p class="compact-note">Freiwillig · Einmalig</p>`;
-    if (state.view === 'imprint') content = `<h2 class="section-label">Anbieter</h2><div class="group information-copy address-block"><strong>Bruno Geßner</strong><div>c/o POSTFLEX PFX-425-383<br>Emsdettener Straße 10<br>48268 Greven</div></div><h2 class="section-label contact-heading">Kontakt</h2><div class="group information-copy"><p>E-Mail: brg.entwicklung@gmail.com</p>${mailLink('E-Mail schreiben','Kontakt')}</div>`;
+    if (state.view === 'guide') content = `<div class="guide-illustration" aria-hidden="true"><svg viewBox="0 0 320 190" fill="none"><path d="M60 115h170l35 55H30z" fill="var(--paper)" stroke="currentColor" stroke-width="3"/><path d="M80 135h130m-118 14h90" stroke="currentColor" stroke-width="3"/><rect x="115" y="15" width="85" height="115" rx="13" fill="var(--bg)" stroke="currentColor" stroke-width="5"/><rect x="125" y="30" width="65" height="77" rx="4" stroke="currentColor" stroke-width="2"/><path d="M145 118h25M106 85 82 112m114-30 27 27" stroke="currentColor" stroke-width="3"/></svg></div><div class="group information-copy"><h2>1. Dokument vorbereiten</h2><p>Lege das Papier möglichst flach auf einen freien Tisch. Sorge für gutes Licht ohne Schatten und Spiegelungen.</p><h2>2. Scan starten</h2><p>Tippe auf Neuer Scan. Halte dein Gerät über das Dokument. Folge jeweils dem angezeigten oder gesprochenen Hinweis.</p><h2>3. Dokument erfassen</h2><p>Alle Ränder müssen im Bild sein. Halte die Kamera ruhig. Bei guter Ausrichtung und Qualität wird die Seite automatisch aufgenommen.</p><h2>4. Weitere Seiten scannen</h2><p>Wähle Weiter scannen oder Fertig. Ist Automatisch weiterscannen eingeschaltet, lege die nächste Seite auf. Mit Fertig kommst du zum Dokument.</p><h2>5. Lesen und benennen</h2><p>Lies den erkannten Text. Mit der Lupe kannst du ihn durchsuchen. Tippe oben auf Dateiname, um den vorgeschlagenen Namen zu ändern.</p><h2>6. Format wählen</h2><p>PDF erhält das Aussehen der Seite. Word und Rich Text sind zum Bearbeiten gedacht. Text enthält einfachen Text. Du kannst das Format wechseln, ohne neu zu scannen.</p><h2>7. Speichern oder teilen</h2><p>Speichern legt die Datei im gewählten Ordner ab. Teilen öffnet die Auswahl zum Weitergeben. Speicherort und Standardformat legst du in den Einstellungen fest.</p></div>`;
+    if (state.view === 'support') content = `<div class="group information-copy"><p>Wenn dir Dokumaro gefällt, kannst du die Weiterentwicklung freiwillig unterstützen. Alle Funktionen bleiben für alle verfügbar.</p></div><h2 class="section-label">Einmalig unterstützen</h2><div class="group">${[['small','Kleine Unterstützung','1,99 €'],['medium','Mittlere Unterstützung','4,99 €'],['large','Große Unterstützung','9,99 €']].map(([id,label,price]) => `<button class="setting-row row-button support-choice" data-action="support-${id}"><span>${label}</span><strong>${price}</strong></button>`).join('')}</div><p class="compact-note">Freiwillig · Einmalig · Jederzeit wieder möglich</p><p id="support-status" role="status"></p>`;
+    if (state.view === 'imprint') content = `<h2 class="section-label">Anbieter</h2><div class="group information-copy address-block"><strong>Bruno Geßner</strong><div>c/o POSTFLEX PFX-425-383<br>Emsdettener Straße 10<br>48268 Greven</div></div><h2 class="section-label contact-heading">Kontakt</h2><div class="group information-copy"><p>E-Mail: brg.entwicklung@gmail.com</p>${mailLink('E-Mail schreiben','Kontakt')}<a class="setting-row row-button mail-link" href="https://www.brg-entwicklung.de/">BRG Entwicklung im Internet<span aria-hidden="true">↗</span></a></div>`;
     if (state.view === 'privacy') content = `<div class="group information-copy"><p>Einstellungen werden lokal auf deinem Gerät gespeichert. Dokumentinhalte bleiben bis zum Abschluss im Arbeitsspeicher.</p><p>Es werden keine Analyse- oder Trackingdienste eingebunden. Beim Aufruf verarbeitet der Hostinganbieter technisch notwendige Verbindungsdaten.</p></div>`;
     return `<section class="settings-page"><h1 tabindex="-1">${titles[state.view]}</h1>${content}</section>`;
   }
   function normalizedName(value) {
-    const base = value.trim().replace(/(?:\.pdf)+$/gi, '').trim();
+    const base = value.trim().replace(/(?:\.(?:pdf|docx|rtf|txt))+$/gi, '').trim();
     if (!base) return { error: 'Bitte gib einen Dateinamen ein.' };
     if (/[<>:"/\\|?*\u0000-\u001f]/u.test(base) || /^[. ]+$/.test(base) || /[. ]$/.test(base)) return { error: 'Bitte verwende einen Namen ohne Sonderzeichen wie /, \\, : oder ? und ohne Punkt am Ende.' };
     if (base.length > 120) return { error: 'Bitte kürze den Dateinamen auf höchstens 120 Zeichen.' };
-    return { name: base + '.pdf', base };
+    return { name: base + '.' + state.format, base };
   }
   function documentView() {
     return `<section class="document-screen"><h1 class="sr-only" tabindex="-1">Dein Dokument, ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</h1>
@@ -251,6 +255,8 @@
       if (state.view !== 'home' || !trigger.isConnected) return;
     }
     state.pages = [];
+    state.format = settings.format;
+    state.guidance = 0;
     state.awaitingChange = false;
     state.search = '';
     state.searchOpen = false;
@@ -315,7 +321,7 @@
   function share() {
     const name = filenameForExport();
     if (!name) return;
-    openDialog('Teilen', `<div class="file-chip">${icon('document', 30)}<div><strong>${esc(name)}</strong><small>PDF · ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</small></div></div>`, button('share-complete', 'Fertig', 'primary', 'share') + button('close-dialog', 'Abbrechen', 'secondary'));
+    openDialog('Teilen', `<div class="file-chip">${icon('document', 30)}<div><strong>${esc(name)}</strong><small>${formats[state.format].label} · ${state.pages.length} ${state.pages.length === 1 ? 'Seite' : 'Seiten'}</small></div></div>`, button('share-complete', 'Fertig', 'primary', 'share') + button('close-dialog', 'Abbrechen', 'secondary'));
   }
   function abort() {
     openDialog('Scan verwerfen?', `<p>${state.pages.length ? 'Die erfassten Seiten und der erkannte Text werden verworfen.' : 'Der Scan wird beendet.'}</p>`, button('confirm-abort', 'Scan verwerfen', 'danger-button') + button('close-dialog', 'Scan fortsetzen', 'secondary'));
@@ -327,13 +333,21 @@
     closeDialog(false);
     render();
   }
+  function supportUnavailable() {
+    openDialog('Unterstützung nicht verfügbar', '<p>Die Verbindung zum App Store ist gerade nicht verfügbar. Bitte versuche es später erneut.</p>', button('retry-support', 'Erneut versuchen') + button('close-dialog', 'Schließen', 'secondary'));
+  }
   const actions = {
     start, capture, finish, save, share, abort,
+    align() {
+      if (state.view !== 'camera' || state.awaitingChange) return;
+      if (state.guidance < 2) { state.guidance++; render(false); main.querySelector('[data-action="align"]').focus(); announce(guidanceSteps[state.guidance]); }
+      else capture();
+    },
     settings() { state.settingsReturn = state.view; state.view = 'settings'; render(); },
     'back-settings'() { state.view = state.settingsReturn; render(); if (state.view === 'document') updateSearch(); },
     home() { state.view = 'home'; render(); },
-    'page-change'() { if (!state.awaitingChange) return; state.awaitingChange = false; render(); announce('Neue Seite bereit. Das Dokument etwas nach rechts bewegen.'); },
-    continue() { closeDialog(false); state.awaitingChange = false; render(); },
+    'page-change'() { if (!state.awaitingChange) return; state.awaitingChange = false; state.guidance = 0; render(); announce(guidanceSteps[0]); },
+    continue() { closeDialog(false); state.awaitingChange = false; state.guidance = 0; render(); },
     'close-dialog'() { closeDialog(); },
     'confirm-abort'() { closeDialog(false); state.pages = []; state.filename = ''; state.search = ''; state.notice = ''; state.view = 'home'; render(); },
     folder() { chooseFolder(); },
@@ -355,7 +369,7 @@
     'unique-name'() {
       const original = normalizedName(state.filename).base;
       let number = 2;
-      while (exportedNames.has(settings.folder + '/' + `${original} (${number}).pdf`.toLocaleLowerCase('de-DE'))) number++;
+      while (exportedNames.has(settings.folder + '/' + `${original} (${number}).${state.format}`.toLocaleLowerCase('de-DE'))) number++;
       state.filename = `${original} (${number})`;
       closeDialog(false); render(); updateSearch(); save();
     },
@@ -369,6 +383,7 @@
       else $('navigation').querySelector('[data-action="toggle-search"]').focus();
     },
     permission() { openDialog('Kamerazugriff nicht erlaubt', '<p>Erlaube den Kamerazugriff in den iOS-Einstellungen, um Dokumente zu erfassen.</p>', button('close-dialog', 'Zurück zum Scan')); },
+    guide() { state.view = 'guide'; render(); },
     help() { state.view = 'help'; render(); },
     support() { state.view = 'support'; render(); },
     imprint() { state.view = 'imprint'; render(); },
@@ -378,7 +393,10 @@
       try { await navigator.clipboard.writeText('brg.entwicklung@gmail.com'); $('contact-status').textContent = 'Supportadresse kopiert.'; }
       catch { $('contact-status').textContent = 'Supportadresse: brg.entwicklung@gmail.com'; }
     },
-    'retry-support'() { $('support-status').textContent = 'Die Unterstützungsbeträge sind gerade nicht verfügbar. Bitte versuche es später erneut.'; }
+    'support-small'() { supportUnavailable(); },
+    'support-medium'() { supportUnavailable(); },
+    'support-large'() { supportUnavailable(); },
+    'retry-support'() { supportUnavailable(); }
 
   };
   document.addEventListener('click', event => {
@@ -395,6 +413,8 @@
   });
   document.addEventListener('change', event => {
     const {id, checked} = event.target;
+    if (id === 'document-format' && Object.hasOwn(formats, event.target.value)) { state.format = event.target.value; }
+    if (id === 'default-format' && Object.hasOwn(formats, event.target.value)) { settings.format = event.target.value; persistSettings(); }
     if (id === 'folder-setting') { settings.folder = event.target.value; persistSettings(); }
     if (id === 'auto-setting') { settings.auto = checked; persistSettings(); }
     if (id === 'sound-setting') { settings.sound = checked; persistSettings(); }
@@ -417,5 +437,5 @@
     document.documentElement.style.setProperty('--document-dock-height', `${height}px`);
   }
   const dockObserver = new ResizeObserver(updateDockHeight);
-  render(false);
+  render();
 })();
