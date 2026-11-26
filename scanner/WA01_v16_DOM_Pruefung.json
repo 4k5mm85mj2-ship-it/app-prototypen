@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "method": "DOM functional regression; no optical/hardware/native claims",
+  "results": [
+    {
+      "language": "de",
+      "homeFocus": "settings, combined identity, scan",
+      "parallelShutter": "passed",
+      "saveDialog": "title and one Done",
+      "returnFocus": "settings"
+    },
+    {
+      "language": "en",
+      "homeFocus": "settings, combined identity, scan",
+      "parallelShutter": "passed",
+      "saveDialog": "title and one Done",
+      "returnFocus": "settings"
+    },
+    {
+      "language": "fr",
+      "homeFocus": "settings, combined identity, scan",
+      "parallelShutter": "passed",
+      "saveDialog": "title and one Done",
+      "returnFocus": "settings"
+    }
+  ]
+}

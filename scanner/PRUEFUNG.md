@@ -51,3 +51,7 @@ Die Grundfunktionen einschließlich beider Scan-Modi, Texterkennungshinweisen, K
 VoiceOver auf iPhone/iPad, mobile Safari-Ansicht, Bildschirmtastatur, Dynamic Type, Anzeigezoom, dunkle Darstellung und untere Safe Area bleiben auf echten Geräten zu prüfen. Mindestgrößen, Safe-Area-Abstände und Anpassungen an den sichtbaren Bereich bei geöffneter Bildschirmtastatur sind im Layout enthalten; daraus wird keine praktische Geräteabnahme abgeleitet.
 
 Kameraausrichtung, echte Seitenwechsel-/Dublettenerkennung, OCR-Qualität, Ordnerberechtigungen, PDF-Erstellung, PDF-Textebene, PDF/UA und das native Teilmenü können mit diesem Klickdummy nicht validiert werden. Die Darstellung bleibt eine Web-Simulation.
+
+
+
+WA01-Abnahmekorrektur, Version 16, 26.11.2026: Home-Fokus Einstellungen → zusammenhängender vollständiger Produkttext → Neuer Scan; größere adaptive vertikale Abstände. Runde Schaltfläche „Scan auslösen“ parallel zur Ausrichtungssimulation, in de/en/fr. Bestehender Speicherdialog enthält ausschließlich Titel und Fertig und kehrt erst danach heim. Die Bildschirmaufnahme ist eine Simulation; reale Hardwaretasten, Optik, OCR, PDF-Metadaten und Systemsprachausgabe sind nur in der nativen App prüfbar.

@@ -50,7 +50,7 @@
     settings.sound = saved.sound !== false;
     if (['Auf meinem iPhone / Scans', 'iCloud Drive / Scans'].includes(saved.folder)) settings.folder = saved.folder;
   } catch { /* Settings are optional; the prototype also works without localStorage. */ }
-  const state = { view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', searchOpen: false, match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '', format: settings.format, guidance: 0 };
+  const state = { lastCaptureAt: 0, view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', searchOpen: false, match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '', format: settings.format, guidance: 0 };
   const exportedNames = new Set();
   let returnFocus = null;
   function persistSettings() {
@@ -60,7 +60,7 @@
   function button(action, label, style = 'primary', symbol = '') {
     return `<button type="button" class="${style}" data-action="${action}">${symbol ? icon(symbol, 21) : ''}${label}</button>`;
   }
-  function focusTitle() { if (state.view === 'home') main.querySelector('[data-action="start"]')?.focus(); else main.querySelector('h1')?.focus(); }
+  function focusTitle() { if (state.view === 'home') document.querySelector('#navigation [data-action="settings"]')?.focus(); else main.querySelector('h1')?.focus(); }
   function render(focus = true) {
     announce('');
     const atHome = state.view === 'home';
@@ -72,7 +72,7 @@
     document.body.classList.toggle('information-active', isInfo);
     document.body.classList.toggle('document-active', isDocument);
     $('navigation').innerHTML = atHome
-      ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title" aria-hidden="true">Dokumaro</span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
+      ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title" aria-hidden="true"></span><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings', 23)}</button>`
       : isInfo ? `<button class="nav-button" data-action="back-info">${icon('back',20)}Zurück</button>`
       : isDocument
         ? `<span class="navigation-spacer" aria-hidden="true"></span><span class="nav-title">Dokument</span><div class="nav-actions"><button class="nav-button icon-button" aria-label="Dokument durchsuchen" aria-expanded="${state.searchOpen}" aria-controls="search-panel" data-action="toggle-search">${icon('search', 22)}</button><button class="nav-button icon-button" aria-label="Einstellungen" data-action="settings">${icon('settings',23)}</button></div>`
@@ -88,7 +88,7 @@
   }
   function homeView() {
     return `<section class="home">
-      <div class="home-copy" aria-hidden="true"><h1 aria-hidden="true">Einfach digital.<br>Für alle.</h1><p class="intro" aria-hidden="true">Scannen. Lesen. Teilen.</p></div>
+      <p class="home-copy" tabindex="0" aria-label="Dokumaro. Einfach digital. Für alle. Scannen. Lesen. Teilen."><strong class="product-name" aria-hidden="true">Dokumaro</strong><span class="home-claim" aria-hidden="true">Einfach digital. Für alle.</span><span class="intro" aria-hidden="true">Scannen. Lesen. Teilen.</span></p>
       ${state.notice ? `<p class="status-message" role="status">${esc(state.notice)}</p>` : ''}
       <button type="button" class="scan-start-button" data-action="start"><span class="scanner-art" aria-hidden="true"><img class="scanner-base" src="scanner-comic.webp" width="640" height="480" alt=""><img class="scanner-lid" src="scanner-comic.webp" width="640" height="480" alt=""></span><span>Neuer Scan</span></button>
     </section>`;
@@ -102,7 +102,7 @@
       <div class="camera-preview camera-stage-${state.guidance}" aria-hidden="true"><div class="camera-grid"></div><div class="demo-paper"><p>EINLADUNG<br>ZUM TEAMTAG</p><div class="paper-line"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line short"></div></div><svg class="document-frame" viewBox="0 0 400 600" preserveAspectRatio="none"><polygon points="4,4 396,4 396,596 4,596"/></svg></div>
       <div class="camera-count"><span>${count} ${count === 1 ? 'Seite' : 'Seiten'}</span></div>
       <div class="camera-overlay"><div class="guidance"><span class="guidance-icon" aria-hidden="true">${icon(waiting ? 'check' : 'scan', 26)}</span><div><strong id="camera-guidance">${hint}</strong>${waiting ? '<p>Lege die nächste Seite auf.</p>' : ''}</div></div>
-      <div class="camera-actions">${count ? button('finish', 'Fertig', 'primary', 'check') : ''}${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('align', 'Dokument ausrichten', 'secondary', 'scan')}</div></div>
+      <div class="camera-actions">${count ? button('finish', 'Fertig', 'primary', 'check') : '<span aria-hidden="true"></span>'}<button type="button" class="camera-shutter" data-action="manual-capture" aria-label="Scan auslösen"><span aria-hidden="true"></span></button>${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('align', 'Dokument ausrichten', 'secondary', 'scan')}</div></div>
     </section>`;
   }
   function settingsView() {
@@ -129,7 +129,7 @@
     const titles = {guide:'Anleitung',help:'Hilfe und Kontakt',support:'Dokumaro unterstützen',imprint:'Impressum',privacy:'Datenschutz'};
     let content = '';
     if (state.view === 'help') content = `<div class="group information-copy"><h2>Schön, dass du Dokumaro nutzt!</h2><p>Ich entwickle Apps aus Überzeugung: Sie sollen den Alltag einfacher machen, Freude bereiten und für alle Menschen gut bedienbar sein – unabhängig davon, ob sie mit oder ohne Einschränkungen genutzt werden.</p><p>Dabei gilt für mich: Weniger ist mehr. Klare Funktionen, durchdachtes Design und echte Barrierefreiheit stehen im Mittelpunkt.</p><p>Hast du eine Idee, einen Verbesserungsvorschlag oder funktioniert etwas nicht wie erwartet? Dann schreib mir gerne. Deine Rückmeldung hilft mir, Dokumaro weiterzuentwickeln.</p></div><div class="group">${mailLink('Problem melden','Problem melden')}${mailLink('Idee oder Feedback senden','Idee oder Feedback')}<button class="setting-row row-button" data-action="copy-address">Supportadresse kopieren</button></div><p id="contact-status" role="status"></p>`;
-    if (state.view === 'guide') content = `<div class="guide-illustration" aria-hidden="true"><svg viewBox="0 0 320 190" fill="none"><path d="M60 115h170l35 55H30z" fill="var(--paper)" stroke="currentColor" stroke-width="3"/><path d="M80 135h130m-118 14h90" stroke="currentColor" stroke-width="3"/><rect x="115" y="15" width="85" height="115" rx="13" fill="var(--bg)" stroke="currentColor" stroke-width="5"/><rect x="125" y="30" width="65" height="77" rx="4" stroke="currentColor" stroke-width="2"/><path d="M145 118h25M106 85 82 112m114-30 27 27" stroke="currentColor" stroke-width="3"/></svg></div><div class="group information-copy"><h2>1. Dokument vorbereiten</h2><p>Lege das Papier möglichst flach auf einen freien Tisch. Sorge für gutes Licht ohne Schatten und Spiegelungen.</p><h2>2. Scan starten</h2><p>Tippe auf Neuer Scan. Halte dein Gerät über das Dokument. Folge jeweils dem angezeigten oder gesprochenen Hinweis.</p><h2>3. Dokument erfassen</h2><p>Alle Ränder müssen im Bild sein. Halte die Kamera ruhig. Bei guter Ausrichtung und Qualität wird die Seite automatisch aufgenommen.</p><h2>4. Weitere Seiten scannen</h2><p>Wähle Weiter scannen oder Fertig. Ist Automatisch weiterscannen eingeschaltet, lege die nächste Seite auf. Mit Fertig kommst du zum Dokument.</p><h2>5. Lesen und benennen</h2><p>Lies den erkannten Text. Mit der Lupe kannst du ihn durchsuchen. Tippe oben auf Dateiname, um den vorgeschlagenen Namen zu ändern.</p><h2>6. Format wählen</h2><p>PDF erhält das Aussehen der Seite. Word und Rich Text sind zum Bearbeiten gedacht. Text enthält einfachen Text. Du kannst das Format wechseln, ohne neu zu scannen.</p><h2>7. Speichern oder teilen</h2><p>Speichern legt die Datei im gewählten Ordner ab. Teilen öffnet die Auswahl zum Weitergeben. Speicherort und Standardformat legst du in den Einstellungen fest.</p></div>`;
+    if (state.view === 'guide') content = `<div class="guide-illustration" aria-hidden="true"><svg viewBox="0 0 320 190" fill="none"><path d="M60 115h170l35 55H30z" fill="var(--paper)" stroke="currentColor" stroke-width="3"/><path d="M80 135h130m-118 14h90" stroke="currentColor" stroke-width="3"/><rect x="115" y="15" width="85" height="115" rx="13" fill="var(--bg)" stroke="currentColor" stroke-width="5"/><rect x="125" y="30" width="65" height="77" rx="4" stroke="currentColor" stroke-width="2"/><path d="M145 118h25M106 85 82 112m114-30 27 27" stroke="currentColor" stroke-width="3"/></svg></div><div class="group information-copy"><h2>1. Dokument vorbereiten</h2><p>Lege das Papier möglichst flach auf einen freien Tisch. Sorge für gutes Licht ohne Schatten und Spiegelungen.</p><h2>2. Scan starten</h2><p>Tippe auf Neuer Scan. Halte dein Gerät über das Dokument. Folge jeweils dem angezeigten oder gesprochenen Hinweis.</p><h2>3. Dokument erfassen</h2><p>Alle Ränder müssen im Bild sein. Halte die Kamera ruhig. Bei guter Ausrichtung und Qualität wird die Seite automatisch aufgenommen.</p><p>Du kannst auch mit Scan auslösen aufnehmen, bevor die automatische Ausrichtung vollständig erreicht ist. Unterstützte Gerätetasten lösen in der iOS-App beim Loslassen aus. Jede Aufnahme wird geprüft; bereits erfasste Seiten bleiben bei einem Fehler erhalten.</p><p>Mit akustischen Hinweisen spricht die eigene Kameraassistenz, auch ohne VoiceOver. Sind die Hinweise ausgeschaltet, liest VoiceOver sie vor, sofern es aktiv ist. Ohne beides bleiben sie sichtbar.</p><h2>4. Weitere Seiten scannen</h2><p>Wähle Weiter scannen oder Fertig. Ist Automatisch weiterscannen eingeschaltet, lege die nächste Seite auf. Mit Fertig kommst du zum Dokument.</p><h2>5. Lesen und benennen</h2><p>Lies den erkannten Text. Mit der Lupe kannst du ihn durchsuchen. Tippe oben auf Dateiname, um den vorgeschlagenen Namen zu ändern.</p><h2>6. Format wählen</h2><p>PDF erhält das Aussehen der Seite. Word und Rich Text sind zum Bearbeiten gedacht. Text enthält einfachen Text. Du kannst das Format wechseln, ohne neu zu scannen.</p><h2>7. Speichern oder teilen</h2><p>Speichern legt die Datei im gewählten Ordner ab. Teilen öffnet die Auswahl zum Weitergeben. Speicherort und Standardformat legst du in den Einstellungen fest.</p></div>`;
     if (state.view === 'support') content = `<div class="group information-copy"><p>Wenn dir Dokumaro gefällt, kannst du die Weiterentwicklung freiwillig unterstützen. Alle Funktionen bleiben für alle verfügbar.</p></div><h2 class="section-label">Einmalig unterstützen</h2><div class="group">${[['small','Kleine Unterstützung','1,99 €'],['medium','Mittlere Unterstützung','4,99 €'],['large','Große Unterstützung','9,99 €']].map(([id,label,price]) => `<button class="setting-row row-button support-choice" data-action="support-${id}"><span>${label}</span><strong>${price}</strong></button>`).join('')}</div><p class="compact-note">Freiwillig · Einmalig · Jederzeit wieder möglich</p><p id="support-status" role="status"></p>`;
     if (state.view === 'imprint') content = `<h2 class="section-label">Anbieter</h2><div class="group information-copy address-block"><strong>Bruno Geßner</strong><div>c/o POSTFLEX PFX-425-383<br>Emsdettener Straße 10<br>48268 Greven</div></div><h2 class="section-label contact-heading">Kontakt</h2><div class="group information-copy"><p>E-Mail: brg.entwicklung@gmail.com</p>${mailLink('E-Mail schreiben','Kontakt')}<a class="setting-row row-button mail-link" href="https://www.brg-entwicklung.de/">BRG Entwicklung im Internet<span aria-hidden="true">↗</span></a></div>`;
     if (state.view === 'privacy') content = `<div class="group information-copy"><p>Einstellungen werden lokal auf deinem Gerät gespeichert. Dokumentinhalte bleiben bis zum Abschluss im Arbeitsspeicher.</p><p>Es werden keine Analyse- oder Trackingdienste eingebunden. Beim Aufruf verarbeitet der Hostinganbieter technisch notwendige Verbindungsdaten.</p></div>`;
@@ -271,8 +271,9 @@
     state.view = 'camera';
     render();
   }
-  function capture() {
-    if (state.view !== 'camera' || state.awaitingChange || dialog.open) return;
+  function capture(manual = false) {
+    if (state.view !== 'camera' || (state.awaitingChange && !manual) || dialog.open || Date.now() - state.lastCaptureAt < 600) return;
+    state.lastCaptureAt = Date.now();
     state.pages.push(samples[state.pages.length % samples.length]);
     state.awaitingChange = true;
     render(false);
@@ -341,6 +342,7 @@
   }
   const actions = {
     start, capture, finish, save, share, abort,
+    'manual-capture'() { capture(true); },
     align() {
       if (state.view !== 'camera' || state.awaitingChange) return;
       if (state.guidance < 2) { state.guidance++; render(false); main.querySelector('[data-action="align"]').focus(); announce(guidanceSteps[state.guidance]); }
@@ -443,4 +445,5 @@
   const dockObserver = new ResizeObserver(updateDockHeight);
   render();
 })();
+
 

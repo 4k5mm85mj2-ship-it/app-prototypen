@@ -37,3 +37,7 @@ Zusätzlich browsergeprüft: Vollbild und drei Hinweisstufen, Aufnahme, Formatin
 ## VoiceOver-Korrektur 13
 
 Der gesamte Claim-/Untertitelblock der Startseite ist als ein benanntes, fokussierbares Gruppenelement erreichbar; visuelle Einzeltexte werden nicht zusätzlich ausgegeben. Jeder der beiden Einstellungsschalter ist eine einzige native Checkbox mit switch-Rolle und zusammenhängendem Namen aus Titel und Erklärung. Die ganze sichtbare Zeile aktiviert den Schalter; Beschriftung und dekorativer Schalter erzeugen keine zusätzlichen Fokusstopps. Alle fünf Informationsseiten haben oben links „Zurück“ mit Pfeil; Navigation bleibt beim Scrollen sichtbar und führt den Fokus zurück zum jeweiligen Einstellungseintrag. Browser-Accessibility-Prüfung ersetzt keine reale iOS-VoiceOver-Abnahme.
+
+
+
+WA01-Abnahmekorrektur, Version 16, 26.11.2026: Home-Fokus Einstellungen → zusammenhängender vollständiger Produkttext → Neuer Scan; größere adaptive vertikale Abstände. Runde Schaltfläche „Scan auslösen“ parallel zur Ausrichtungssimulation, in de/en/fr. Bestehender Speicherdialog enthält ausschließlich Titel und Fertig und kehrt erst danach heim. Die Bildschirmaufnahme ist eine Simulation; reale Hardwaretasten, Optik, OCR, PDF-Metadaten und Systemsprachausgabe sind nur in der nativen App prüfbar.
