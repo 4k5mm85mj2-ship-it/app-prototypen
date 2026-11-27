@@ -53,6 +53,56 @@
   const state = { lastCaptureAt: 0, view: 'home', settingsReturn: 'home', pages: [], awaitingChange: false, filename: '', search: '', searchOpen: false, match: -1, saveError: false, ocrMissing: false, forceCollision: false, notice: '', format: settings.format, guidance: 0 };
   const exportedNames = new Set();
   let returnFocus = null;
+  let stabilizationRun = 0;
+  let audioContext;
+  const homeObserver = new ResizeObserver(syncHomeWidth);
+  function syncHomeWidth() {
+    const copy = main.querySelector('.home-copy');
+    const scan = main.querySelector('.scan-start-button');
+    if (!copy || !scan) return;
+    const widths = [...copy.children].map(element => {
+      const range = document.createRange(); range.selectNodeContents(element);
+      return Math.max(0, ...[...range.getClientRects()].map(rect => rect.width));
+    });
+    scan.style.width = Math.min(copy.parentElement.clientWidth, Math.max(44, ...widths)) + 'px';
+  }
+  function cancelStabilization() { stabilizationRun++; state.stabilizing = false; state.progress = 0; window.speechSynthesis?.cancel(); }
+  function tone(index) {
+    if (!settings.sound) return;
+    audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+    audioContext.resume();
+    const oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
+    oscillator.frequency.value = [440, 660, 880][index];
+    oscillator.connect(gain); gain.connect(audioContext.destination);
+    const start = audioContext.currentTime;
+    gain.gain.setValueAtTime(0, start); gain.gain.linearRampToValueAtTime(0.18, start + .012);
+    gain.gain.setValueAtTime(.18, start + .088); gain.gain.linearRampToValueAtTime(0, start + .10);
+    oscillator.start(start); oscillator.stop(start + .10);
+  }
+  function stabilize() {
+    cancelStabilization(); const token = stabilizationRun;
+    state.stabilizing = true; state.progress = 0; render(false);
+    const text = window.DokumaroI18n.translate('Gut. Jetzt ruhig halten.');
+    const begin = () => {
+      if (token !== stabilizationRun || state.view !== 'camera') return;
+      const start = performance.now(); let played = 0;
+      function step(time) {
+        if (token !== stabilizationRun || state.view !== 'camera' || !state.stabilizing) return;
+        state.progress = Math.min(1, (time - start) / 2400);
+        const progress = main.querySelector('progress'); if (progress) progress.value = state.progress;
+        if (played < 3 && time - start >= [250,1150,2050][played]) tone(played++);
+        if (state.progress >= 1 && played === 3) { state.stabilizing = false; capture(); }
+        else requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    };
+    const local = window.speechSynthesis?.getVoices().find(voice => voice.localService && voice.lang.startsWith(settings.language));
+    if (settings.sound && local) {
+      const utterance = new SpeechSynthesisUtterance(text); utterance.voice = local; utterance.rate = .9;
+      utterance.onend = begin; utterance.onerror = () => { cancelStabilization(); render(false); };
+      window.speechSynthesis.speak(utterance);
+    } else { announce(text); begin(); }
+  }
   function persistSettings() {
     try { localStorage.setItem('scanner-prototype-settings', JSON.stringify(settings)); } catch { /* Use in-memory settings. */ }
   }
@@ -63,6 +113,8 @@
   function focusTitle() { if (state.view === 'home') document.querySelector('#navigation [data-action="settings"]')?.focus(); else main.querySelector('h1')?.focus(); }
   function render(focus = true) {
     announce('');
+    if (state.view !== 'camera') cancelStabilization();
+    homeObserver.disconnect();
     const atHome = state.view === 'home';
     const isDocument = state.view === 'document';
     const isInfo = ['guide','help','support','imprint','privacy'].includes(state.view);
@@ -84,6 +136,12 @@
     if (isDocument) dockObserver.observe(main.ownerDocument.querySelector('.document-dock'));
     updateDockHeight();
     window.DokumaroI18n.apply();
+    document.querySelector('.binder-rings')?.remove();
+    if (atHome) {
+      document.querySelector('.app-shell').insertAdjacentHTML('afterbegin', '<div class="binder-rings" aria-hidden="true">' + '<i></i>'.repeat(5) + '</div>');
+      const copy = main.querySelector('.home-copy'); if (copy) homeObserver.observe(copy);
+      requestAnimationFrame(syncHomeWidth);
+    }
     if (focus) focusTitle();
   }
   function homeView() {
@@ -93,15 +151,15 @@
       <button type="button" class="scan-start-button" data-action="start"><span class="scanner-art" aria-hidden="true"><img class="scanner-base" src="scanner-comic.webp" width="640" height="480" alt=""><img class="scanner-lid" src="scanner-comic.webp" width="640" height="480" alt=""></span><span>Neuer Scan</span></button>
     </section>`;
   }
-  const guidanceSteps = ['Kamera nach rechts bewegen.', 'Kamera parallel zum Dokument halten.', 'Gut. Kamera ruhig halten.'];
+  const guidanceSteps = ['Kamera nach rechts bewegen.', 'Kamera parallel zum Dokument halten.', 'Gut. Jetzt ruhig halten.'];
   function cameraView() {
     const count = state.pages.length;
     const waiting = state.awaitingChange;
-    const hint = waiting ? `Seite ${count} erfasst.` : guidanceSteps[state.guidance];
+    const hint = waiting ? `Seite ${count} erfasst.` : state.stabilizing ? 'Gut. Jetzt ruhig halten.' : guidanceSteps[state.guidance];
     return `<section class="camera-screen"><h1 class="sr-only" tabindex="-1">Dokument erfassen</h1>
       <div class="camera-preview camera-stage-${state.guidance}" aria-hidden="true"><div class="camera-grid"></div><div class="demo-paper"><p>EINLADUNG<br>ZUM TEAMTAG</p><div class="paper-line"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-line"></div><div class="paper-line short"></div></div><svg class="document-frame" viewBox="0 0 400 600" preserveAspectRatio="none"><polygon points="4,4 396,4 396,596 4,596"/></svg></div>
       <div class="camera-count"><span>${count} ${count === 1 ? 'Seite' : 'Seiten'}</span></div>
-      <div class="camera-overlay"><div class="guidance"><span class="guidance-icon" aria-hidden="true">${icon(waiting ? 'check' : 'scan', 26)}</span><div><strong id="camera-guidance">${hint}</strong>${waiting ? '<p>Lege die nächste Seite auf.</p>' : ''}</div></div>
+      <div class="camera-overlay"><div class="guidance"><span class="guidance-icon" aria-hidden="true">${icon(waiting ? 'check' : 'scan', 26)}</span><div><strong id="camera-guidance">${hint}</strong>${state.stabilizing ? '<progress value="0" max="1" aria-label="Stabilisierung"></progress><span aria-hidden="true">①　②　③</span>' : ''}${waiting ? '<p>Lege die nächste Seite auf.</p>' : ''}</div></div>
       <div class="camera-actions">${count ? button('finish', 'Fertig', 'primary', 'check') : '<span aria-hidden="true"></span>'}<button type="button" class="camera-shutter" data-action="manual-capture" aria-label="Scan auslösen"><span aria-hidden="true"></span></button>${waiting ? button('page-change', 'Nächste Seite auflegen', 'secondary', 'plus') : button('align', 'Dokument ausrichten', 'secondary', 'scan')}</div></div>
     </section>`;
   }
@@ -273,7 +331,7 @@
   }
   function capture(manual = false) {
     if (state.view !== 'camera' || (state.awaitingChange && !manual) || dialog.open || Date.now() - state.lastCaptureAt < 600) return;
-    state.lastCaptureAt = Date.now();
+    cancelStabilization(); state.lastCaptureAt = Date.now();
     state.pages.push(samples[state.pages.length % samples.length]);
     state.awaitingChange = true;
     render(false);
@@ -345,8 +403,9 @@
     'manual-capture'() { capture(true); },
     align() {
       if (state.view !== 'camera' || state.awaitingChange) return;
+      if (state.stabilizing) { cancelStabilization(); state.guidance = 0; render(false); announce(guidanceSteps[0]); return; }
       if (state.guidance < 2) { state.guidance++; render(false); main.querySelector('[data-action="align"]').focus(); announce(guidanceSteps[state.guidance]); }
-      else capture();
+      else stabilize();
     },
     settings() { state.settingsReturn = state.view; state.view = 'settings'; render(); },
     'back-settings'() { state.view = state.settingsReturn; render(); if (state.view === 'document') updateSearch(); },
@@ -445,5 +504,6 @@
   const dockObserver = new ResizeObserver(updateDockHeight);
   render();
 })();
+
 
 
